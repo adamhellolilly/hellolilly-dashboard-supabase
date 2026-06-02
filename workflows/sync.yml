@@ -1,0 +1,24 @@
+name: Sync Dashboard Data
+
+on:
+  schedule:
+    # Facebook + TikTok: every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Facebook
+        run: |
+          curl -s "${{ secrets.VERCEL_URL }}/api/sync-facebook" || true
+
+      - name: Sync TikTok
+        run: |
+          curl -s "${{ secrets.VERCEL_URL }}/api/sync-tiktok" || true
+
+      - name: Sync HubSpot (daily at 6am UTC)
+        if: ${{ github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          curl -s "${{ secrets.VERCEL_URL }}/api/sync-hubspot" || true
