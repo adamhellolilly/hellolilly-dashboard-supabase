@@ -1,0 +1,10 @@
+{
+  "name": "hellolilly-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": "20.x" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "ws": "^8.18.0"
+  }
+}
