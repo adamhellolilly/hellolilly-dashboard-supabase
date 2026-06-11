@@ -75,6 +75,15 @@ module.exports = async function handler(req, res) {
       else                   { L.w5 += leads; }
     }
 
+    // Add TikTok leads from HubSpot (more reliable than TikTok API)
+    // funnel.tiktok_leads_month = TikTok leads this month
+    // Distribute proportionally: w0 = this month, estimate w1/w2 from w0
+    const ttLeads = funnel?.tiktok_leads_month || 0;
+    L.w0 += ttLeads;
+    // Estimate prior months TikTok leads as similar to current month
+    L.w1 += ttLeads;
+    L.w2 += ttLeads;
+
     // Lead-attributed CAC per month = spend / (leads × TOTAL_CONV)
     // This varies by month based on actual spend and leads that month
     const leadAttrCAC = [
