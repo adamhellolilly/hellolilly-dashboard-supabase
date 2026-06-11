@@ -27,31 +27,69 @@ module.exports = async function handler(req, res) {
     if (!r.ok) { const e = await r.text(); throw new Error(`Supabase: ${e}`); }
   }
 
+  // Try multiple possible metric names for "Complete Registration"
+  const metricSets = [
+    ['real_time_result', 'real_time_cost_per_result'],
+    ['result', 'cost_per_result'],
+    ['app_event_add_to_cart', 'cost_per_app_event_add_to_cart'],
+  ];
+
   try {
-    const queryParams = [
-      `advertiser_id=${advertiser}`,
-      `report_type=BASIC`,
-      `data_level=AUCTION_CAMPAIGN`,
-      `dimensions=${encodeURIComponent(JSON.stringify(['campaign_id']))}`,
-      `metrics=${encodeURIComponent(JSON.stringify(['campaign_name','spend','impressions','reach','clicks','ctr','cpc','cpm','frequency','complete_registration','cost_per_complete_registration']))}`,
-      `start_date=${today}`,
-      `end_date=${today}`,
-      `page_size=100`,
-    ].join('&');
+    let leads = 0;
+    let costPerLead = null;
+    let rawData = [];
+    let workingMetrics = null;
 
-    const insRes = await fetch(`${TT_BASE}/report/integrated/get/?${queryParams}`, {
-      method: 'GET',
-      headers: { 'Access-Token': token, 'Content-Type': 'application/json' },
-    });
+    // Try each metric set until one works
+    for (const [leadMetric, cplMetric] of metricSets) {
+      const queryParams = [
+        `advertiser_id=${advertiser}`,
+        `report_type=BASIC`,
+        `data_level=AUCTION_CAMPAIGN`,
+        `dimensions=${encodeURIComponent(JSON.stringify(['campaign_id']))}`,
+        `metrics=${encodeURIComponent(JSON.stringify(['campaign_name','spend','impressions','reach','clicks','ctr','cpc','cpm','frequency', leadMetric, cplMetric]))}`,
+        `start_date=${today}`,
+        `end_date=${today}`,
+        `page_size=100`,
+      ].join('&');
 
-    const rawText = await insRes.text();
-    let insData;
-    try { insData = JSON.parse(rawText); }
-    catch(e) { throw new Error('TikTok returned non-JSON: ' + rawText.slice(0, 300)); }
+      const insRes = await fetch(`${TT_BASE}/report/integrated/get/?${queryParams}`, {
+        method: 'GET',
+        headers: { 'Access-Token': token, 'Content-Type': 'application/json' },
+      });
 
-    if (insData.code !== 0) throw new Error(`TikTok API error (code ${insData.code}): ${insData.message}`);
+      const insData = JSON.parse(await insRes.text());
+      if (insData.code === 0) {
+        workingMetrics = [leadMetric, cplMetric];
+        rawData = insData.data?.list || [];
+        break;
+      }
+    }
 
-    const rows = (insData.data?.list || [])
+    if (!rawData.length && !workingMetrics) {
+      // Fall back to no lead metrics at all — just sync spend/impressions/clicks
+      const queryParams = [
+        `advertiser_id=${advertiser}`,
+        `report_type=BASIC`,
+        `data_level=AUCTION_CAMPAIGN`,
+        `dimensions=${encodeURIComponent(JSON.stringify(['campaign_id']))}`,
+        `metrics=${encodeURIComponent(JSON.stringify(['campaign_name','spend','impressions','reach','clicks','ctr','cpc','cpm','frequency']))}`,
+        `start_date=${today}`,
+        `end_date=${today}`,
+        `page_size=100`,
+      ].join('&');
+
+      const insRes = await fetch(`${TT_BASE}/report/integrated/get/?${queryParams}`, {
+        method: 'GET',
+        headers: { 'Access-Token': token, 'Content-Type': 'application/json' },
+      });
+
+      const insData = JSON.parse(await insRes.text());
+      if (insData.code !== 0) throw new Error(`TikTok API error (code ${insData.code}): ${insData.message}`);
+      rawData = insData.data?.list || [];
+    }
+
+    const rows = rawData
       .map(r => ({
         date:          today,
         platform:      'tiktok',
@@ -61,18 +99,22 @@ module.exports = async function handler(req, res) {
         impressions:   parseInt(r.metrics?.impressions || 0),
         reach:         parseInt(r.metrics?.reach || 0),
         clicks:        parseInt(r.metrics?.clicks || 0),
-        leads:         parseInt(r.metrics?.complete_registration || 0),
+        leads:         workingMetrics ? parseInt(r.metrics?.[workingMetrics[0]] || 0) : 0,
         cpm:           parseFloat(r.metrics?.cpm || 0) * USD_TO_SEK,
         ctr:           parseFloat(r.metrics?.ctr || 0),
         cpc:           parseFloat(r.metrics?.cpc || 0) * USD_TO_SEK,
-        cost_per_lead: parseFloat(r.metrics?.cost_per_complete_registration || 0) ? parseFloat(r.metrics?.cost_per_complete_registration) * USD_TO_SEK : null,
+        cost_per_lead: workingMetrics && parseFloat(r.metrics?.[workingMetrics[1]] || 0) ? parseFloat(r.metrics?.[workingMetrics[1]]) * USD_TO_SEK : null,
         frequency:     parseFloat(r.metrics?.frequency || 0),
       }))
       .filter(r => r.spend > 0 && String(r.campaign_id) === TT_ROM_CAMP);
 
     if (rows.length) await supabaseUpsert('campaign_snapshots', rows, 'date,platform,campaign_id');
 
-    return res.status(200).json({ ok: true, date: today, campaigns_synced: rows.length });
+    return res.status(200).json({
+      ok: true, date: today,
+      campaigns_synced: rows.length,
+      working_metrics: workingMetrics,
+    });
 
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
