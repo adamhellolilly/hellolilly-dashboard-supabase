@@ -253,7 +253,7 @@ function adPerf(a){
   return 'pb';
 }
 
-function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
+function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
   const now = new Date();
   const monthNames = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
 
@@ -286,23 +286,9 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
     custM3 > 0 ? Math.round(monthlySpend/custM3) : null,
   ];
 
-  // Projected spend per month based on current rate
-  const projMonthlySpend = monthlySpend;
-  const cpl = totalLeads > 0 ? totalSpend/totalLeads : 40;
-  const projLeadsPerMonth = projMonthlySpend / cpl;
-  const existingLeads = totalLeads;
-
-  // Combined CAC: total spend / (customers from existing leads tail + customers from new leads)
-  const projDetails = [];
-  for (let m = 0; m < 3; m++) {
-    const custFromExisting = existingLeads * (CONV_WINDOW[m] || 0.001);
-    const custFromNew      = projLeadsPerMonth * CONV_WINDOW[0];
-    const totalCust        = custFromExisting + custFromNew;
-    const cac              = totalCust > 0 ? Math.round(projMonthlySpend / totalCust) : null;
-    projDetails.push({ custFromExisting, custFromNew, totalCust, cac });
-  }
-
-  const projCAC = projDetails.map(d => d.cac);
+  // Use server-calculated projection
+  const projMonths = projection?.months || [];
+  const projCAC = projMonths.map(m => m.cac);
 
   const ctx = document.getElementById('cacChart').getContext('2d');
   if (cacChartInstance) cacChartInstance.destroy();
@@ -366,14 +352,14 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
     },
   });
 
-  // Breakdown below chart
-  document.getElementById('chart-breakdown').innerHTML = projDetails.map((d,i) => `
+  // Breakdown below chart using server projection
+  document.getElementById('chart-breakdown').innerHTML = (projection?.months || []).map((m,i) => `
     <div class="cb-item">
       <div class="cb-label">${futureLabels[i]}</div>
-      <div class="cb-val">${d.cac ? sek(d.cac) : '—'}</div>
+      <div class="cb-val">${m.cac ? sek(m.cac) : '—'}</div>
       <div class="cb-sub">
-        ${d.custFromExisting.toFixed(1)} bef. leads + ${d.custFromNew.toFixed(1)} nya leads
-        = ${d.totalCust.toFixed(1)} kunder · ${sek(Math.round(projMonthlySpend))} spend
+        ${m.existing.toFixed(1)} bef. leads + ${m.new_leads.toFixed(1)} nya leads
+        = ${m.total.toFixed(1)} kunder
       </div>
     </div>
   `).join('');
@@ -440,7 +426,7 @@ function render() {
     <div class="ks">${k.s||''}</div>${k.tg||''}${k.br||''}
   </div>`).join('');
 
-  buildCacChart(fn, DATA.platforms||{}, totalSpend, totalLeads);
+  buildCacChart(fn, DATA.platforms||{}, totalSpend, totalLeads, DATA.projection);
 
   const fbCPL=fb.leads>0?fb.spend/fb.leads:null;
   const ttCPL=tt.leads>0?tt.spend/tt.leads:null;
