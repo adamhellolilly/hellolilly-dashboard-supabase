@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HelloLilly — ROM Dashboard</title>
+<style>
+@font-face{font-family:'Rebond Grotesque';src:url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2') format('woff2');font-weight:400;}
+:root{
+  --blue:#243CF2;--dark:#132080;--lb1:#B2CFFF;--lb2:#5B84FF;
+  --pink:#FFB2E5;--lp1:#FFE5F9;--beige:#FFF4E8;--w2:#FCFAF7;
+  --ink:#0E1234;--ink60:rgba(14,18,52,.6);--ink40:rgba(14,18,52,.4);
+  --ink20:rgba(14,18,52,.2);--ink10:rgba(14,18,52,.1);--ink06:rgba(14,18,52,.06);
+  --good:#0E7A45;--good-bg:#E6F5EE;--warn:#C87A00;--warn-bg:#FFF3DB;
+  --bad:#B02020;--bad-bg:#FDEAEA;
+  --f:'Inter',system-ui,sans-serif;
+  --r:16px;--sh:0 2px 12px rgba(14,18,52,.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+
+.hdr{background:var(--blue);padding:24px 36px 48px;position:relative;overflow:hidden;}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--beige);clip-path:ellipse(55% 100% at 50% 100%);}
+.hdr-inner{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;position:relative;z-index:1;}
+.logo-tag{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(252,250,247,.55);margin-bottom:8px;}
+.hdr-title{font-weight:800;font-size:clamp(1.8rem,3.5vw,2.8rem);letter-spacing:-0.03em;line-height:.95;color:var(--w2);}
+.hdr-title .dot{color:var(--pink);}
+.hdr-sub{font-size:13px;color:rgba(252,250,247,.55);margin-top:6px;}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+.period-pills{display:flex;gap:3px;background:rgba(252,250,247,.12);border-radius:999px;padding:3px;}
+.pp{background:transparent;border:none;color:rgba(252,250,247,.65);font-size:12px;font-weight:600;padding:5px 14px;border-radius:999px;cursor:pointer;transition:all .15s;}
+.pp.active,.pp:hover{background:var(--w2);color:var(--blue);}
+.sync-btn{background:var(--pink);border:none;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;transition:opacity .2s;}
+.sync-btn:hover{opacity:.85;}
+.sync-btn:disabled{opacity:.4;cursor:not-allowed;}
+.upd{font-size:11px;color:rgba(252,250,247,.4);text-align:right;}
+
+.status-bar{padding:8px 36px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink60);border-bottom:1px solid var(--ink10);}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
+.dot.err{background:var(--bad);}
+.dot.loading{background:#c88a1a;animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.page{padding:0 36px 60px;max-width:1400px;margin:0 auto;}
+.sec{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink40);margin:36px 0 14px;display:flex;align-items:center;gap:10px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--ink10);}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--w2);border-radius:var(--r);padding:18px 20px 20px;box-shadow:var(--sh);position:relative;overflow:hidden;}
+.kpi.blue{background:var(--blue);}
+.kpi.blue .kl,.kpi.blue .ks{color:rgba(252,250,247,.6);}
+.kpi.blue .kv{color:var(--w2);}
+.kpi.blue .dot2{color:var(--pink);}
+.kl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink60);margin-bottom:8px;}
+.kv{font-weight:800;font-size:clamp(1.4rem,2.2vw,1.9rem);letter-spacing:-0.03em;line-height:1;color:var(--ink);}
+.dot2{color:var(--pink);}
+.ks{font-size:11px;color:var(--ink60);margin-top:5px;line-height:1.4;}
+.ktag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:6px;}
+.tg{background:var(--good-bg);color:var(--good);}
+.tw{background:var(--warn-bg);color:var(--warn);}
+.tb{background:var(--bad-bg);color:var(--bad);}
+.kbar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--ink10);}
+.kfill{height:100%;border-radius:0 2px 2px 0;}
+.fg{background:var(--good);}.fw{background:var(--warn);}.fb-{background:var(--bad);}
+
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:700px){.plat-grid{grid-template-columns:1fr;}}
+.pc{background:var(--w2);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh);}
+.pc-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.plat-badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em;}
+.fb-b{background:#E7EAFF;color:var(--blue);}
+.tt-b{background:var(--ink);color:var(--w2);}
+.pc-name{font-size:12px;color:var(--ink60);font-weight:600;flex:1;}
+.pc-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ink06);}
+.pc-row:last-child{border-bottom:none;}
+.pc-k{font-size:13px;color:var(--ink60);}
+.pc-v{font-weight:700;font-size:13px;}
+
+.funnel-wrap{background:var(--w2);border-radius:var(--r);padding:28px;box-shadow:var(--sh);}
+.funnel-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
+.fs{display:flex;flex-direction:column;align-items:center;padding:20px 12px;position:relative;}
+.fs:not(:last-child)::after{content:'→';position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--ink20);font-weight:800;}
+.fs-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px;}
+.fs-n{font-weight:800;font-size:clamp(1.6rem,2.5vw,2.2rem);letter-spacing:-0.03em;line-height:1;}
+.fs-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink60);margin-top:4px;}
+.fs-cost{font-size:12px;color:var(--ink60);margin-top:4px;}
+.fs-rate{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--ink06);color:var(--ink60);margin-top:8px;}
+.funnel-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:16px;padding-top:16px;border-top:1px solid var(--ink10);}
+.fst{text-align:center;font-size:12px;color:var(--ink60);}
+.fst strong{display:block;font-weight:800;font-size:1.1rem;color:var(--ink);letter-spacing:-0.02em;}
+
+.proj{background:var(--dark);border-radius:var(--r);padding:24px 28px;box-shadow:0 8px 24px rgba(14,18,52,.15);}
+.proj h3{font-weight:800;font-size:1.15rem;letter-spacing:-0.02em;color:var(--w2);margin-bottom:18px;}
+.proj h3 .dot{color:var(--pink);}
+.proj-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+@media(max-width:800px){.proj-grid{grid-template-columns:repeat(2,1fr);}}
+.pi-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(252,250,247,.5);margin-bottom:5px;}
+.pi-v{font-weight:800;font-size:1.5rem;letter-spacing:-0.03em;color:var(--w2);}
+.pi-v.pink{color:var(--pink);}
+.pi-s{font-size:11px;color:rgba(252,250,247,.45);margin-top:3px;}
+.proj-note{margin-top:18px;padding-top:14px;border-top:1px solid rgba(252,250,247,.1);font-size:12px;color:rgba(252,250,247,.45);line-height:1.6;}
+
+.ads-wrap{background:var(--w2);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
+.ads-bar{padding:14px 18px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--ink10);flex-wrap:wrap;}
+.ads-search{background:var(--beige);border:1px solid var(--ink10);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--ink);outline:none;width:200px;}
+.ads-search:focus{border-color:var(--blue);}
+.sort-sel{background:var(--beige);border:1px solid var(--ink10);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--ink);outline:none;cursor:pointer;}
+.ads-ct{margin-left:auto;font-size:12px;color:var(--ink60);}
+.tbl-scroll{overflow-x:auto;}
+.ads-tbl{width:100%;border-collapse:collapse;min-width:900px;}
+.ads-tbl thead th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink60);padding:10px 12px;text-align:left;border-bottom:2px solid var(--ink10);white-space:nowrap;cursor:pointer;background:var(--w2);user-select:none;}
+.ads-tbl thead th:not(:first-child){text-align:right;}
+.ads-tbl thead th:hover{color:var(--ink);}
+.ads-tbl thead th.sa::after{content:' ↑';color:var(--blue);}
+.ads-tbl thead th.sd::after{content:' ↓';color:var(--blue);}
+.ads-tbl tbody tr{border-bottom:1px solid var(--ink06);transition:background .1s;}
+.ads-tbl tbody tr:hover{background:var(--beige);}
+.ads-tbl tbody td{padding:12px;vertical-align:middle;}
+.ads-tbl tbody td:not(:first-child){text-align:right;font-size:13px;}
+.ad-n{font-weight:600;font-size:13px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
+.fb-dot{background:var(--blue);}.tt-dot{background:#000;}
+.perf-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;}
+.pg{background:var(--good);}.pw{background:var(--warn);}.pb{background:var(--bad);}.pn{background:var(--ink20);}
+.na{color:var(--ink40);font-size:11px;}
+.empty-row td{padding:48px;text-align:center;color:var(--ink60);font-style:italic;}
+.col-div{border-left:2px solid var(--ink10)!important;}
+
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--ink10);display:flex;justify-content:space-between;font-size:11px;color:var(--ink40);flex-wrap:wrap;gap:8px;}
+.footer strong{color:var(--ink60);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-inner">
+    <div>
+      <div class="logo-tag">HelloLilly Reach</div>
+      <div class="hdr-title">ROM Campaign<span class="dot">.</span></div>
+      <div class="hdr-sub" id="period-sub">Facebook + TikTok · Senaste 30 dagarna · Live från Supabase</div>
+    </div>
+    <div class="hdr-right">
+      <div class="period-pills">
+        <button class="pp" data-d="7"  onclick="setPeriod(this)">7d</button>
+        <button class="pp active" data-d="30" onclick="setPeriod(this)">30d</button>
+        <button class="pp" data-d="60" onclick="setPeriod(this)">60d</button>
+        <button class="pp" data-d="90" onclick="setPeriod(this)">90d</button>
+      </div>
+      <button class="sync-btn" id="sync-btn" onclick="triggerSync()">↻ Synka nu</button>
+      <div class="upd" id="upd">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="dot loading" id="sdot"></div>
+  <span id="stxt">Hämtar data från Supabase…</span>
+</div>
+
+<div class="page">
+  <div class="sec">Nyckeltal</div>
+  <div class="kpi-grid" id="kpis"></div>
+
+  <div class="sec">Plattformsuppdelning</div>
+  <div class="plat-grid" id="plats"></div>
+
+  <div class="sec">Konverteringstrappa</div>
+  <div class="funnel-wrap" id="funnel"></div>
+
+  <div class="sec">Projicerad CAC</div>
+  <div class="proj" id="proj"></div>
+
+  <div class="sec">Annonsanalys</div>
+  <div class="ads-wrap">
+    <div class="ads-bar">
+      <input class="ads-search" type="text" placeholder="Sök annons…" id="ads-q" oninput="renderAds()">
+      <select class="sort-sel" id="ads-sort" onchange="renderAds()">
+        <option value="spend">Spend ↓</option>
+        <option value="leads">Leads ↓</option>
+        <option value="cost_per_lead">Cost/Lead ↓</option>
+        <option value="ctr">CTR ↓</option>
+        <option value="cpm">CPM ↓</option>
+      </select>
+      <div class="ads-ct" id="ads-ct">—</div>
+    </div>
+    <div class="tbl-scroll">
+      <table class="ads-tbl">
+        <thead><tr>
+          <th onclick="adSort('ad_name')">Annons</th>
+          <th onclick="adSort('spend')">Spend</th>
+          <th onclick="adSort('leads')">Leads</th>
+          <th onclick="adSort('cost_per_lead')">Cost/Lead</th>
+          <th onclick="adSort('ctr')">CTR</th>
+          <th onclick="adSort('cpc')">CPC</th>
+          <th onclick="adSort('cpm')">CPM</th>
+          <th onclick="adSort('impressions')">Impr.</th>
+          <th onclick="adSort('reach')" class="col-div">Reach</th>
+          <th onclick="adSort('frequency')">Freq.</th>
+        </tr></thead>
+        <tbody id="ads-body"><tr class="empty-row"><td colspan="10">Laddar annonser…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>HelloLilly Reach · ROM Dashboard · <strong>Facebook + TikTok + HubSpot via Supabase</strong></span>
+    <span id="footer-ts">—</span>
+  </div>
+</div>
+
+<script>
+const TARGET_CAC   = 1500;
+const TARGET_KOLLA = 180;
+const L2K  = 0.104;
+const K2C  = 0.120;
+const L2C  = L2K * K2C;
+
+let periodDays = 30;
+let DATA = null;
+let adSortKey = 'spend';
+
+const sek  = (n,d=0) => n==null?'—':'kr '+Number(n).toLocaleString('sv-SE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct  = n => n==null?'—':Number(n).toFixed(2)+'%';
+const fmt  = n => { if(n==null) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return Number(n).toLocaleString('sv-SE'); };
+
+function tag(a,t,lower=true){
+  if(a==null||t==null) return '<span class="ktag" style="background:var(--ink06);color:var(--ink60)">Beräknas</span>';
+  const r=a/t;
+  let c,l;
+  if(lower){if(r<=.85){c='tg';l='↓ Under mål';}else if(r<=1){c='tg';l='✓ På mål';}else if(r<=1.2){c='tw';l='⚠ Nära mål';}else{c='tb';l='↑ Över mål';}}
+  else{if(r>=1.15){c='tg';l='↑ Över mål';}else if(r>=1){c='tg';l='✓ På mål';}else if(r>=.8){c='tw';l='⚠ Nära mål';}else{c='tb';l='↓ Under mål';}}
+  return `<span class="ktag ${c}">${l}</span>`;
+}
+function bar(a,t,lower=true){
+  if(!a||!t) return '';
+  const r=Math.min(a/t,1.5),w=(r/1.5*100).toFixed(1);
+  const c=lower?(r<=1?'fg':r<=1.2?'fw':'fb-'):(r>=1?'fg':r>=.8?'fw':'fb-');
+  return `<div class="kbar"><div class="kfill ${c}" style="width:${w}%"></div></div>`;
+}
+function adPerf(a){
+  if(!a.cost_per_lead) return 'pn';
+  if(a.cost_per_lead<=20) return 'pg';
+  if(a.cost_per_lead<=40) return 'pw';
+  return 'pb';
+}
+
+async function loadData() {
+  const dot=document.getElementById('sdot'),stxt=document.getElementById('stxt');
+  dot.className='dot loading'; stxt.textContent='Hämtar data…';
+  try {
+    const r = await fetch(`/api/dashboard-data?days=${periodDays}`);
+    if(!r.ok) throw new Error('API error '+r.status);
+    DATA = await r.json();
+    if(!DATA.ok) throw new Error(DATA.error);
+    dot.className='dot ok';
+    stxt.textContent=`Aktiv · Uppdaterad ${new Date().toLocaleTimeString('sv-SE')} · Data från Supabase`;
+    document.getElementById('upd').textContent='Synkad: '+new Date(DATA.synced_at).toLocaleString('sv-SE');
+    document.getElementById('footer-ts').textContent='Facebook · TikTok · HubSpot · Supabase · '+new Date().toLocaleString('sv-SE');
+    render();
+  } catch(e) {
+    dot.className='dot err'; stxt.textContent='Fel: '+e.message;
+  }
+}
+
+async function triggerSync() {
+  const btn=document.getElementById('sync-btn');
+  btn.disabled=true; btn.textContent='Synkar…';
+  try {
+    await Promise.allSettled([
+      fetch('/api/sync-facebook'),
+      fetch('/api/sync-tiktok'),
+      fetch('/api/sync-hubspot'),
+    ]);
+    await new Promise(r=>setTimeout(r,2000));
+    await loadData();
+  } catch(e) {}
+  btn.disabled=false; btn.textContent='↻ Synka nu';
+}
+
+function setPeriod(btn) {
+  periodDays = parseInt(btn.dataset.d);
+  document.querySelectorAll('.pp').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels={7:'Senaste 7 dagarna',30:'Senaste 30 dagarna',60:'Senaste 60 dagarna',90:'Senaste 90 dagarna'};
+  document.getElementById('period-sub').textContent=`Facebook + TikTok · ${labels[periodDays]} · Live från Supabase`;
+  loadData();
+}
+
+function render() {
+  if(!DATA) return;
+  const fb = DATA.platforms?.facebook || {};
+  const tt = DATA.platforms?.tiktok   || {};
+  const fn = DATA.funnel || {};
+  const kollarom  = DATA.kollarom  || 0;
+  const customers = DATA.customers || 0;
+
+  const totalSpend = (fb.spend||0)+(tt.spend||0);
+  const totalLeads = (fb.leads||0)+(tt.leads||0);
+  const actCAC     = customers > 0 ? totalSpend/customers : null;
+  const actKolla   = kollarom  > 0 ? totalSpend/kollarom  : null;
+  const projCust   = Math.round(totalLeads*L2C);
+  const projCAC    = projCust > 0 ? Math.round(totalSpend/projCust) : null;
+
+  // KPIs
+  document.getElementById('kpis').innerHTML = [
+    {l:'Total spend',    v:sek(totalSpend),  s:`FB: ${sek(fb.spend||0)} · TT: ${tt.spend?sek(tt.spend):'Pending'}`, blue:true},
+    {l:'Target CAC',     v:sek(TARGET_CAC),  s:'Kostnad per kund (mål)'},
+    {l:'Faktisk CAC',    v:actCAC?sek(Math.round(actCAC)):'—', s:`${customers} kunder (${periodDays}d)`, tg:tag(actCAC,TARGET_CAC,true), br:bar(actCAC,TARGET_CAC,true)},
+    {l:'Projicerad CAC', v:projCAC?sek(projCAC):'—', s:`${totalLeads} leads × ${(L2C*100).toFixed(2)}%`, tg:tag(projCAC,TARGET_CAC,true), br:bar(projCAC,TARGET_CAC,true)},
+    {l:'Target kostnad/KollaROM', v:sek(TARGET_KOLLA), s:`CAC ${sek(TARGET_CAC)} × K2C ${(K2C*100).toFixed(0)}%`},
+    {l:'Faktisk kostnad/KollaROM', v:actKolla?sek(Math.round(actKolla)):'—', s:`${kollarom} KollaROM (${periodDays}d)`, tg:tag(actKolla,TARGET_KOLLA,true), br:bar(actKolla,TARGET_KOLLA,true)},
+  ].map(k=>`<div class="kpi${k.blue?' blue':''}">
+    <div class="kl">${k.l}</div>
+    <div class="kv">${k.v}<span class="dot2">.</span></div>
+    <div class="ks">${k.s||''}</div>
+    ${k.tg||''}${k.br||''}
+  </div>`).join('');
+
+  // Platform cards
+  const fbCPL = fb.leads>0 ? fb.spend/fb.leads : null;
+  const ttCPL = tt.leads>0 ? tt.spend/tt.leads : null;
+  document.getElementById('plats').innerHTML = `
+    <div class="pc">
+      <div class="pc-hdr"><span class="plat-badge fb-b">📘 Facebook</span><span class="pc-name">HuvudkampanjAPI (ROM) — Ny + Gammal</span></div>
+      ${[['Spend',sek(fb.spend||0)],['Leads',fmt(fb.leads||0)],['Cost/Lead',fbCPL?sek(fbCPL,2):'—'],['Clicks',fmt(fb.clicks||0)],['Impressions',fmt(fb.impressions||0)],['Reach',fmt(fb.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join('')}
+    </div>
+    <div class="pc">
+      <div class="pc-hdr"><span class="plat-badge tt-b">♪ TikTok</span><span class="pc-name">Smartcampaign_ROM</span></div>
+      ${tt.spend ? [['Spend',sek(tt.spend)],['Leads',fmt(tt.leads||0)],['Cost/Lead',ttCPL?sek(ttCPL,2):'—'],['Clicks',fmt(tt.clicks||0)],['Impressions',fmt(tt.impressions||0)],['Reach',fmt(tt.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join('') : '<div class="pc-row"><span class="pc-k">Status</span><span class="pc-v" style="color:var(--ink40)">Väntar på data…</span></div>'}
+    </div>`;
+
+  // Funnel
+  const l2kPct = totalLeads>0?(kollarom/totalLeads*100).toFixed(1):'—';
+  const k2cPct = kollarom>0?(customers/kollarom*100).toFixed(1):'—';
+  const l2cPct = totalLeads>0?(customers/totalLeads*100).toFixed(2):'—';
+  document.getElementById('funnel').innerHTML = `
+    <div class="funnel-row">
+      ${[
+        {e:'📣',n:fmt(totalLeads),l:'Leads',c:sek((fb.spend+tt.spend)/Math.max(totalLeads,1),2)+'/lead',r:'',bg:'#B2CFFF',tc:'#132080'},
+        {e:'👀',n:fmt(kollarom),l:'KollaROM',c:actKolla?sek(Math.round(actKolla))+'/st':'—',r:l2kPct+'% av leads',bg:'#FFD6F0',tc:'#132080'},
+        {e:'🎓',n:fmt(customers),l:'Kunder',c:actCAC?sek(Math.round(actCAC))+'/kund':'—',r:k2cPct+'% av KollaROM',bg:'#E6F5EE',tc:'#0E7A45'},
+        {e:'📊',n:l2cPct+'%',l:'Lead→Kund',c:`Mål: ${(L2C*100).toFixed(2)}%`,r:'Total konv.',bg:'#243CF2',tc:'#FCFAF7'},
+      ].map(s=>`<div class="fs">
+        <div class="fs-icon" style="background:${s.bg}">${s.e}</div>
+        <div class="fs-n" style="color:${s.tc==='#132080'?'var(--ink)':s.tc}">${s.n}</div>
+        <div class="fs-lbl">${s.l}</div>
+        <div class="fs-cost" style="color:${s.tc==='#FCFAF7'?'rgba(252,250,247,.7)':'var(--ink60)'}">${s.c}</div>
+        ${s.r?`<span class="fs-rate">${s.r}</span>`:''}
+      </div>`).join('')}
+    </div>
+    <div class="funnel-stats">
+      <div class="fst"><strong>${fmt(totalLeads)}</strong>Leads genererade</div>
+      <div class="fst"><strong>${l2kPct}%</strong>Lead → KollaROM</div>
+      <div class="fst"><strong>${k2cPct}%</strong>KollaROM → Kund</div>
+      <div class="fst"><strong>${fn.superheta_month||'—'}</strong>Superheta leads (mån)</div>
+    </div>`;
+
+  // Projection
+  document.getElementById('proj').innerHTML = `
+    <h3>Projicerad CAC<span class="dot">.</span></h3>
+    <div class="proj-grid">
+      <div><div class="pi-l">Leads denna period</div><div class="pi-v">${fmt(totalLeads)}</div><div class="pi-s">Faktiskt genererade</div></div>
+      <div><div class="pi-l">Proj. KollaROM</div><div class="pi-v">${Math.round(totalLeads*L2K)}</div><div class="pi-s">${(L2K*100).toFixed(1)}% historisk rate</div></div>
+      <div><div class="pi-l">Proj. Kunder</div><div class="pi-v">${projCust}</div><div class="pi-s">Baserat på historisk konv. oavsett tid</div></div>
+      <div><div class="pi-l">Projicerad CAC</div><div class="pi-v pink">${projCAC?sek(projCAC):'—'}</div><div class="pi-s">vs mål ${sek(TARGET_CAC)}</div></div>
+    </div>
+    <div class="proj-note">
+      <strong style="color:rgba(252,250,247,.65)">Beräkningslogik:</strong>
+      Target KollaROM-kostnad = ${sek(TARGET_CAC)} × ${(K2C*100).toFixed(0)}% = <strong style="color:var(--pink)">${sek(TARGET_KOLLA)}/KollaROM</strong>.
+      Proj. CAC = ${sek(totalSpend)} ÷ (${totalLeads} × ${(L2C*100).toFixed(2)}%) = <strong style="color:var(--pink)">${projCAC?sek(projCAC):'—'}</strong>
+    </div>`;
+
+  renderAds();
+}
+
+function renderAds() {
+  if(!DATA) return;
+  const q    = (document.getElementById('ads-q')?.value||'').toLowerCase();
+  const sort = document.getElementById('ads-sort')?.value || adSortKey;
+  let rows = (DATA.ads||[]).filter(a => !q || a.ad_name?.toLowerCase().includes(q) || a.platform?.includes(q));
+  rows.sort((a,b)=>{ const va=a[sort]??-Infinity, vb=b[sort]??-Infinity; return vb-va; });
+  document.getElementById('ads-ct').textContent = `${rows.length} annonser`;
+  const tbody=document.getElementById('ads-body');
+  if(!rows.length){tbody.innerHTML='<tr class="empty-row"><td colspan="10">Inga annonser ännu</td></tr>';return;}
+  tbody.innerHTML=rows.map(a=>`<tr>
+    <td><span class="plat-dot ${a.platform==='facebook'?'fb-dot':'tt-dot'}"></span><span class="perf-dot ${adPerf(a)}"></span><span class="ad-n" title="${a.ad_name}">${a.ad_name}</span></td>
+    <td>${sek(a.spend)}</td>
+    <td>${fmt(a.leads)||'<span class="na">—</span>'}</td>
+    <td>${a.cost_per_lead?sek(a.cost_per_lead,2):'<span class="na">—</span>'}</td>
+    <td>${a.ctr?pct(a.ctr):'<span class="na">—</span>'}</td>
+    <td>${a.cpc?sek(a.cpc,2):'<span class="na">—</span>'}</td>
+    <td>${a.cpm?sek(a.cpm,2):'<span class="na">—</span>'}</td>
+    <td>${fmt(a.impressions)||'<span class="na">—</span>'}</td>
+    <td class="col-div">${fmt(a.reach)||'<span class="na">—</span>'}</td>
+    <td>${a.frequency?Number(a.frequency).toFixed(2)+'×':'<span class="na">—</span>'}</td>
+  </tr>`).join('');
+}
+
+function adSort(k){adSortKey=k;document.getElementById('ads-sort').value=k;renderAds();}
+
+loadData();
+</script>
+</body>
+</html>
