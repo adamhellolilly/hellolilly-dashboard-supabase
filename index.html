@@ -271,7 +271,7 @@ function adPerf(a){
 }
 
 // ── CAC CHART ──────────────────────────────────────────────────────────────
-function buildCacChart(funnel, platforms) {
+function buildCacChart(funnel, platforms, projCAC) {
   // Build monthly actual CAC from stored period data
   // We have: 30d, 60d, 90d KollaROM and customer counts
   // Derive per-month by subtracting consecutive periods
@@ -319,13 +319,7 @@ function buildCacChart(funnel, platforms) {
     custMonth3 > 0 ? Math.round(monthlySpend / custMonth3) : null,
   );
 
-  // Projected CAC for next 3 months using historical conversion rate
-  // Based on current leads being generated per month
-  const totalLeads = Object.values(platforms).reduce((s,p) => s+(p.leads||0), 0);
-  const leadsPerMonth = totalLeads > 0 ? totalLeads / (periodDays / 30) : 0;
-  const projCustPerMonth = Math.round(leadsPerMonth * L2C);
-  const projCAC = projCustPerMonth > 0 ? Math.round(monthlySpend / projCustPerMonth) : null;
-
+  // Use same projCAC as KPI card for consistency
   for (let i = 0; i < 3; i++) {
     projectedCAC.push(projCAC);
   }
@@ -462,8 +456,8 @@ function render() {
     ${k.tg||''}${k.br||''}
   </div>`).join('');
 
-  // CAC Chart
-  buildCacChart(fn, DATA.platforms || {});
+  // CAC Chart — pass same projCAC as KPI card
+  buildCacChart(fn, DATA.platforms || {}, projCAC);
 
   // Platform cards
   const fbCPL = fb.leads>0 ? fb.spend/fb.leads : null;
