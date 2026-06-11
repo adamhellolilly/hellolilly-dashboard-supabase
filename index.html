@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HelloLilly — ROM Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-@font-face{font-family:'Rebond Grotesque';src:url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2') format('woff2');font-weight:400;}
 :root{
   --blue:#243CF2;--dark:#132080;--lb1:#B2CFFF;--lb2:#5B84FF;
   --pink:#FFB2E5;--lp1:#FFE5F9;--beige:#FFF4E8;--w2:#FCFAF7;
@@ -13,8 +13,7 @@
   --ink20:rgba(14,18,52,.2);--ink10:rgba(14,18,52,.1);--ink06:rgba(14,18,52,.06);
   --good:#0E7A45;--good-bg:#E6F5EE;--warn:#C87A00;--warn-bg:#FFF3DB;
   --bad:#B02020;--bad-bg:#FDEAEA;
-  --f:'Inter',system-ui,sans-serif;
-  --r:16px;--sh:0 2px 12px rgba(14,18,52,.07);
+  --f:'Inter',system-ui,sans-serif;--r:16px;--sh:0 2px 12px rgba(14,18,52,.07);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
@@ -30,22 +29,22 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .period-pills{display:flex;gap:3px;background:rgba(252,250,247,.12);border-radius:999px;padding:3px;}
 .pp{background:transparent;border:none;color:rgba(252,250,247,.65);font-size:12px;font-weight:600;padding:5px 14px;border-radius:999px;cursor:pointer;transition:all .15s;}
 .pp.active,.pp:hover{background:var(--w2);color:var(--blue);}
-.sync-btn{background:var(--pink);border:none;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;transition:opacity .2s;}
-.sync-btn:hover{opacity:.85;}
+.sync-btn{background:var(--pink);border:none;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;}
 .sync-btn:disabled{opacity:.4;cursor:not-allowed;}
 .upd{font-size:11px;color:rgba(252,250,247,.4);text-align:right;}
 
 .status-bar{padding:8px 36px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink60);border-bottom:1px solid var(--ink10);}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.dot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
-.dot.err{background:var(--bad);}
-.dot.loading{background:#c88a1a;animation:pulse 1s ease-in-out infinite;}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sdot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
+.sdot.err{background:var(--bad);}
+.sdot.loading{background:#c88a1a;animation:pulse 1s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-.page{padding:0 36px 60px;max-width:1400px;margin:0 auto;}
+.page{padding:0 36px 60px;max-width:1440px;margin:0 auto;}
 .sec{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink40);margin:36px 0 14px;display:flex;align-items:center;gap:10px;}
 .sec::after{content:'';flex:1;height:1px;background:var(--ink10);}
 
+/* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
 @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
@@ -66,6 +65,16 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .kfill{height:100%;border-radius:0 2px 2px 0;}
 .fg{background:var(--good);}.fw{background:var(--warn);}.fb-{background:var(--bad);}
 
+/* CAC CHART */
+.cac-chart-wrap{background:var(--w2);border-radius:var(--r);padding:24px 28px;box-shadow:var(--sh);}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.chart-title{font-weight:700;font-size:15px;color:var(--ink);}
+.chart-legend{display:flex;gap:16px;font-size:11px;color:var(--ink60);}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+canvas#cacChart{max-height:260px;}
+
+/* PLATFORM CARDS */
 .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:700px){.plat-grid{grid-template-columns:1fr;}}
 .pc{background:var(--w2);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh);}
@@ -79,6 +88,7 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .pc-k{font-size:13px;color:var(--ink60);}
 .pc-v{font-weight:700;font-size:13px;}
 
+/* FUNNEL */
 .funnel-wrap{background:var(--w2);border-radius:var(--r);padding:28px;box-shadow:var(--sh);}
 .funnel-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
 .fs{display:flex;flex-direction:column;align-items:center;padding:20px 12px;position:relative;}
@@ -92,6 +102,7 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .fst{text-align:center;font-size:12px;color:var(--ink60);}
 .fst strong{display:block;font-weight:800;font-size:1.1rem;color:var(--ink);letter-spacing:-0.02em;}
 
+/* PROJECTION */
 .proj{background:var(--dark);border-radius:var(--r);padding:24px 28px;box-shadow:0 8px 24px rgba(14,18,52,.15);}
 .proj h3{font-weight:800;font-size:1.15rem;letter-spacing:-0.02em;color:var(--w2);margin-bottom:18px;}
 .proj h3 .dot{color:var(--pink);}
@@ -103,6 +114,7 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .pi-s{font-size:11px;color:rgba(252,250,247,.45);margin-top:3px;}
 .proj-note{margin-top:18px;padding-top:14px;border-top:1px solid rgba(252,250,247,.1);font-size:12px;color:rgba(252,250,247,.45);line-height:1.6;}
 
+/* ADS */
 .ads-wrap{background:var(--w2);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
 .ads-bar{padding:14px 18px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--ink10);flex-wrap:wrap;}
 .ads-search{background:var(--beige);border:1px solid var(--ink10);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--ink);outline:none;width:200px;}
@@ -114,8 +126,6 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .ads-tbl thead th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink60);padding:10px 12px;text-align:left;border-bottom:2px solid var(--ink10);white-space:nowrap;cursor:pointer;background:var(--w2);user-select:none;}
 .ads-tbl thead th:not(:first-child){text-align:right;}
 .ads-tbl thead th:hover{color:var(--ink);}
-.ads-tbl thead th.sa::after{content:' ↑';color:var(--blue);}
-.ads-tbl thead th.sd::after{content:' ↓';color:var(--blue);}
 .ads-tbl tbody tr{border-bottom:1px solid var(--ink06);transition:background .1s;}
 .ads-tbl tbody tr:hover{background:var(--beige);}
 .ads-tbl tbody td{padding:12px;vertical-align:middle;}
@@ -128,7 +138,6 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .na{color:var(--ink40);font-size:11px;}
 .empty-row td{padding:48px;text-align:center;color:var(--ink60);font-style:italic;}
 .col-div{border-left:2px solid var(--ink10)!important;}
-
 .footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--ink10);display:flex;justify-content:space-between;font-size:11px;color:var(--ink40);flex-wrap:wrap;gap:8px;}
 .footer strong{color:var(--ink60);}
 </style>
@@ -156,13 +165,27 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 </div>
 
 <div class="status-bar">
-  <div class="dot loading" id="sdot"></div>
+  <div class="sdot loading" id="sdot"></div>
   <span id="stxt">Hämtar data från Supabase…</span>
 </div>
 
 <div class="page">
   <div class="sec">Nyckeltal</div>
   <div class="kpi-grid" id="kpis"></div>
+
+  <!-- CAC TREND CHART -->
+  <div class="sec">CAC-trend</div>
+  <div class="cac-chart-wrap">
+    <div class="chart-header">
+      <div class="chart-title">Faktisk CAC vs Projicerad CAC — per månad</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#243CF2"></div>Faktisk CAC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FFB2E5"></div>Projicerad CAC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;opacity:.4"></div>Target kr 1 500</div>
+      </div>
+    </div>
+    <canvas id="cacChart"></canvas>
+  </div>
 
   <div class="sec">Plattformsuppdelning</div>
   <div class="plat-grid" id="plats"></div>
@@ -221,6 +244,7 @@ const L2C  = L2K * K2C;
 let periodDays = 30;
 let DATA = null;
 let adSortKey = 'spend';
+let cacChartInstance = null;
 
 const sek  = (n,d=0) => n==null?'—':'kr '+Number(n).toLocaleString('sv-SE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const pct  = n => n==null?'—':Number(n).toFixed(2)+'%';
@@ -228,8 +252,7 @@ const fmt  = n => { if(n==null) return '—'; if(n>=1e6) return (n/1e6).toFixed(
 
 function tag(a,t,lower=true){
   if(a==null||t==null) return '<span class="ktag" style="background:var(--ink06);color:var(--ink60)">Beräknas</span>';
-  const r=a/t;
-  let c,l;
+  const r=a/t; let c,l;
   if(lower){if(r<=.85){c='tg';l='↓ Under mål';}else if(r<=1){c='tg';l='✓ På mål';}else if(r<=1.2){c='tw';l='⚠ Nära mål';}else{c='tb';l='↑ Över mål';}}
   else{if(r>=1.15){c='tg';l='↑ Över mål';}else if(r>=1){c='tg';l='✓ På mål';}else if(r>=.8){c='tw';l='⚠ Nära mål';}else{c='tb';l='↓ Under mål';}}
   return `<span class="ktag ${c}">${l}</span>`;
@@ -247,21 +270,145 @@ function adPerf(a){
   return 'pb';
 }
 
+// ── CAC CHART ──────────────────────────────────────────────────────────────
+function buildCacChart(funnel, platforms) {
+  // Build monthly actual CAC from stored period data
+  // We have: 30d, 60d, 90d KollaROM and customer counts
+  // Derive per-month by subtracting consecutive periods
+
+  const spend90 = Object.values(platforms).reduce((s,p) => s + (p.spend||0), 0);
+  // Approximate monthly spend from 90d total
+  const spendPerMonth = spend90 / 3;
+
+  // Month labels — last 3 months + next 3 projected
+  const now = new Date();
+  const monthNames = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+
+  const labels = [];
+  const actualCAC = [];
+  const projectedCAC = [];
+
+  // Past 3 months (actual)
+  for (let i = 2; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    labels.push(monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2));
+  }
+
+  // Next 3 months (projected)
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    labels.push(monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2));
+  }
+
+  // Actual CAC per month using period deltas
+  const c90 = funnel?.customers_90d || 0;
+  const c60 = funnel?.customers_60d || 0;
+  const c30 = funnel?.customers_30d || 0;
+
+  const custMonth1 = c90 - c60; // 90→60 days ago
+  const custMonth2 = c60 - c30; // 60→30 days ago
+  const custMonth3 = c30;       // last 30 days
+
+  // Use full 90d spend / 3 as monthly spend proxy
+  const s90 = Object.values(platforms).reduce((s,p) => s+(p.spend||0), 0);
+  const monthlySpend = s90 > 0 ? s90 / 3 : spendPerMonth;
+
+  actualCAC.push(
+    custMonth1 > 0 ? Math.round(monthlySpend / custMonth1) : null,
+    custMonth2 > 0 ? Math.round(monthlySpend / custMonth2) : null,
+    custMonth3 > 0 ? Math.round(monthlySpend / custMonth3) : null,
+  );
+
+  // Projected CAC for next 3 months using historical conversion rate
+  // Based on current leads being generated per month
+  const totalLeads = Object.values(platforms).reduce((s,p) => s+(p.leads||0), 0);
+  const leadsPerMonth = totalLeads > 0 ? totalLeads / (periodDays / 30) : 0;
+  const projCustPerMonth = Math.round(leadsPerMonth * L2C);
+  const projCAC = projCustPerMonth > 0 ? Math.round(monthlySpend / projCustPerMonth) : null;
+
+  for (let i = 0; i < 3; i++) {
+    projectedCAC.push(projCAC);
+  }
+
+  const ctx = document.getElementById('cacChart').getContext('2d');
+  if (cacChartInstance) cacChartInstance.destroy();
+
+  cacChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Faktisk CAC',
+          data: [...actualCAC, null, null, null],
+          backgroundColor: 'rgba(36,60,242,0.85)',
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+        {
+          label: 'Projicerad CAC',
+          data: [null, null, null, ...projectedCAC],
+          backgroundColor: 'rgba(255,178,229,0.85)',
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+        {
+          label: 'Target kr 1 500',
+          data: labels.map(() => TARGET_CAC),
+          type: 'line',
+          borderColor: 'rgba(14,122,69,0.5)',
+          borderWidth: 2,
+          borderDash: [6,4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.parsed.y != null ? `${ctx.dataset.label}: kr ${Math.round(ctx.parsed.y).toLocaleString('sv-SE')}` : '',
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#8a837a' },
+        },
+        y: {
+          grid: { color: 'rgba(14,18,52,.06)' },
+          ticks: {
+            font: { size: 11 }, color: '#8a837a',
+            callback: v => 'kr ' + v.toLocaleString('sv-SE'),
+          },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+}
+
 async function loadData() {
   const dot=document.getElementById('sdot'),stxt=document.getElementById('stxt');
-  dot.className='dot loading'; stxt.textContent='Hämtar data…';
+  dot.className='sdot loading'; stxt.textContent='Hämtar data…';
   try {
     const r = await fetch(`/api/dashboard-data?days=${periodDays}`);
     if(!r.ok) throw new Error('API error '+r.status);
     DATA = await r.json();
     if(!DATA.ok) throw new Error(DATA.error);
-    dot.className='dot ok';
+    dot.className='sdot ok';
     stxt.textContent=`Aktiv · Uppdaterad ${new Date().toLocaleTimeString('sv-SE')} · Data från Supabase`;
     document.getElementById('upd').textContent='Synkad: '+new Date(DATA.synced_at).toLocaleString('sv-SE');
     document.getElementById('footer-ts').textContent='Facebook · TikTok · HubSpot · Supabase · '+new Date().toLocaleString('sv-SE');
     render();
   } catch(e) {
-    dot.className='dot err'; stxt.textContent='Fel: '+e.message;
+    dot.className='sdot err'; stxt.textContent='Fel: '+e.message;
   }
 }
 
@@ -269,12 +416,8 @@ async function triggerSync() {
   const btn=document.getElementById('sync-btn');
   btn.disabled=true; btn.textContent='Synkar…';
   try {
-    await Promise.allSettled([
-      fetch('/api/sync-facebook'),
-      fetch('/api/sync-tiktok'),
-      fetch('/api/sync-hubspot'),
-    ]);
-    await new Promise(r=>setTimeout(r,2000));
+    await Promise.allSettled([fetch('/api/sync-facebook'),fetch('/api/sync-tiktok'),fetch('/api/sync-hubspot')]);
+    await new Promise(r=>setTimeout(r,3000));
     await loadData();
   } catch(e) {}
   btn.disabled=false; btn.textContent='↻ Synka nu';
@@ -306,7 +449,7 @@ function render() {
 
   // KPIs
   document.getElementById('kpis').innerHTML = [
-    {l:'Total spend',    v:sek(totalSpend),  s:`FB: ${sek(fb.spend||0)} · TT: ${tt.spend?sek(tt.spend):'Pending'}`, blue:true},
+    {l:'Total spend',    v:sek(totalSpend),  s:`FB: ${sek(fb.spend||0)} · TT: ${tt.spend?sek(tt.spend):'—'}`, blue:true},
     {l:'Target CAC',     v:sek(TARGET_CAC),  s:'Kostnad per kund (mål)'},
     {l:'Faktisk CAC',    v:actCAC?sek(Math.round(actCAC)):'—', s:`${customers} kunder (${periodDays}d)`, tg:tag(actCAC,TARGET_CAC,true), br:bar(actCAC,TARGET_CAC,true)},
     {l:'Projicerad CAC', v:projCAC?sek(projCAC):'—', s:`${totalLeads} leads × ${(L2C*100).toFixed(2)}%`, tg:tag(projCAC,TARGET_CAC,true), br:bar(projCAC,TARGET_CAC,true)},
@@ -319,6 +462,9 @@ function render() {
     ${k.tg||''}${k.br||''}
   </div>`).join('');
 
+  // CAC Chart
+  buildCacChart(fn, DATA.platforms || {});
+
   // Platform cards
   const fbCPL = fb.leads>0 ? fb.spend/fb.leads : null;
   const ttCPL = tt.leads>0 ? tt.spend/tt.leads : null;
@@ -329,7 +475,7 @@ function render() {
     </div>
     <div class="pc">
       <div class="pc-hdr"><span class="plat-badge tt-b">♪ TikTok</span><span class="pc-name">Smartcampaign_ROM</span></div>
-      ${tt.spend ? [['Spend',sek(tt.spend)],['Leads',fmt(tt.leads||0)],['Cost/Lead',ttCPL?sek(ttCPL,2):'—'],['Clicks',fmt(tt.clicks||0)],['Impressions',fmt(tt.impressions||0)],['Reach',fmt(tt.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join('') : '<div class="pc-row"><span class="pc-k">Status</span><span class="pc-v" style="color:var(--ink40)">Väntar på data…</span></div>'}
+      ${tt.spend?[['Spend',sek(tt.spend)],['Leads',fmt(tt.leads||0)],['Cost/Lead',ttCPL?sek(ttCPL,2):'—'],['Clicks',fmt(tt.clicks||0)],['Impressions',fmt(tt.impressions||0)],['Reach',fmt(tt.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join(''):'<div class="pc-row"><span class="pc-k">Status</span><span class="pc-v" style="color:var(--ink40)">Väntar på data…</span></div>'}
     </div>`;
 
   // Funnel
@@ -339,7 +485,7 @@ function render() {
   document.getElementById('funnel').innerHTML = `
     <div class="funnel-row">
       ${[
-        {e:'📣',n:fmt(totalLeads),l:'Leads',c:sek((fb.spend+tt.spend)/Math.max(totalLeads,1),2)+'/lead',r:'',bg:'#B2CFFF',tc:'#132080'},
+        {e:'📣',n:fmt(totalLeads),l:'Leads',c:sek(totalSpend/Math.max(totalLeads,1),2)+'/lead',r:'',bg:'#B2CFFF',tc:'#132080'},
         {e:'👀',n:fmt(kollarom),l:'KollaROM',c:actKolla?sek(Math.round(actKolla))+'/st':'—',r:l2kPct+'% av leads',bg:'#FFD6F0',tc:'#132080'},
         {e:'🎓',n:fmt(customers),l:'Kunder',c:actCAC?sek(Math.round(actCAC))+'/kund':'—',r:k2cPct+'% av KollaROM',bg:'#E6F5EE',tc:'#0E7A45'},
         {e:'📊',n:l2cPct+'%',l:'Lead→Kund',c:`Mål: ${(L2C*100).toFixed(2)}%`,r:'Total konv.',bg:'#243CF2',tc:'#FCFAF7'},
@@ -364,7 +510,7 @@ function render() {
     <div class="proj-grid">
       <div><div class="pi-l">Leads denna period</div><div class="pi-v">${fmt(totalLeads)}</div><div class="pi-s">Faktiskt genererade</div></div>
       <div><div class="pi-l">Proj. KollaROM</div><div class="pi-v">${Math.round(totalLeads*L2K)}</div><div class="pi-s">${(L2K*100).toFixed(1)}% historisk rate</div></div>
-      <div><div class="pi-l">Proj. Kunder</div><div class="pi-v">${projCust}</div><div class="pi-s">Baserat på historisk konv. oavsett tid</div></div>
+      <div><div class="pi-l">Proj. Kunder</div><div class="pi-v">${projCust}</div><div class="pi-s">Baserat på historisk konv.</div></div>
       <div><div class="pi-l">Projicerad CAC</div><div class="pi-v pink">${projCAC?sek(projCAC):'—'}</div><div class="pi-s">vs mål ${sek(TARGET_CAC)}</div></div>
     </div>
     <div class="proj-note">
@@ -378,17 +524,16 @@ function render() {
 
 function renderAds() {
   if(!DATA) return;
-  const q    = (document.getElementById('ads-q')?.value||'').toLowerCase();
-  const sort = document.getElementById('ads-sort')?.value || adSortKey;
-  let rows = (DATA.ads||[]).filter(a => !q || a.ad_name?.toLowerCase().includes(q) || a.platform?.includes(q));
-  rows.sort((a,b)=>{ const va=a[sort]??-Infinity, vb=b[sort]??-Infinity; return vb-va; });
-  document.getElementById('ads-ct').textContent = `${rows.length} annonser`;
+  const q=( document.getElementById('ads-q')?.value||'').toLowerCase();
+  const sort=document.getElementById('ads-sort')?.value||adSortKey;
+  let rows=(DATA.ads||[]).filter(a=>!q||a.ad_name?.toLowerCase().includes(q)||a.platform?.includes(q));
+  rows.sort((a,b)=>{const va=a[sort]??-Infinity,vb=b[sort]??-Infinity;return vb-va;});
+  document.getElementById('ads-ct').textContent=`${rows.length} annonser`;
   const tbody=document.getElementById('ads-body');
-  if(!rows.length){tbody.innerHTML='<tr class="empty-row"><td colspan="10">Inga annonser ännu</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML='<tr class="empty-row"><td colspan="10">Inga annonser</td></tr>';return;}
   tbody.innerHTML=rows.map(a=>`<tr>
     <td><span class="plat-dot ${a.platform==='facebook'?'fb-dot':'tt-dot'}"></span><span class="perf-dot ${adPerf(a)}"></span><span class="ad-n" title="${a.ad_name}">${a.ad_name}</span></td>
-    <td>${sek(a.spend)}</td>
-    <td>${fmt(a.leads)||'<span class="na">—</span>'}</td>
+    <td>${sek(a.spend)}</td><td>${fmt(a.leads)||'<span class="na">—</span>'}</td>
     <td>${a.cost_per_lead?sek(a.cost_per_lead,2):'<span class="na">—</span>'}</td>
     <td>${a.ctr?pct(a.ctr):'<span class="na">—</span>'}</td>
     <td>${a.cpc?sek(a.cpc,2):'<span class="na">—</span>'}</td>
@@ -400,7 +545,6 @@ function renderAds() {
 }
 
 function adSort(k){adSortKey=k;document.getElementById('ads-sort').value=k;renderAds();}
-
 loadData();
 </script>
 </body>
