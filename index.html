@@ -166,6 +166,7 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:rgba(36,60,242,0.85)"></div>Faktisk CAC</div>
         <div class="legend-item"><div class="legend-dot" style="background:rgba(255,178,229,0.85)"></div>Projicerad CAC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(36,60,242,0.6);border-radius:50%"></div>3-mån rullande snitt</div>
         <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;border-radius:50%"></div>Target kr 1 500</div>
       </div>
     </div>
@@ -290,6 +291,10 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
   const projMonths = projection?.months || [];
   const projCAC = projMonths.map(m => m.cac);
 
+  const avgCAC = (custM1 + custM2 + custM3) > 0
+    ? Math.round((monthlySpend * 3) / (custM1 + custM2 + custM3))
+    : null;
+
   const ctx = document.getElementById('cacChart').getContext('2d');
   if (cacChartInstance) cacChartInstance.destroy();
 
@@ -313,6 +318,19 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
           borderRadius: 6,
           borderSkipped: false,
           order: 2,
+        },
+        {
+          label: '3-mån rullande snitt',
+          data: allLabels.map((_, i) => i < 3 ? avgCAC : null),
+          type: 'line',
+          borderColor: 'rgba(36,60,242,0.6)',
+          borderWidth: 2,
+          borderDash: [4, 3],
+          pointBackgroundColor: 'rgba(36,60,242,0.6)',
+          pointRadius: 4,
+          fill: false,
+          tension: 0,
+          order: 1,
         },
         {
           label: 'Target kr 1 500',
