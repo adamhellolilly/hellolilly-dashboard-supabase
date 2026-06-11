@@ -7,11 +7,12 @@ module.exports = async function handler(req, res) {
   const days         = parseInt(req.query.days || '30');
   const startDate    = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
 
-  // Fetch last 180 days for full conversion tail projection
   const date180 = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
   const date90  = new Date(Date.now() -  90 * 86400000).toISOString().slice(0, 10);
   const date60  = new Date(Date.now() -  60 * 86400000).toISOString().slice(0, 10);
   const date30  = new Date(Date.now() -  30 * 86400000).toISOString().slice(0, 10);
+  const date120 = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
+  const date150 = new Date(Date.now() - 150 * 86400000).toISOString().slice(0, 10);
 
   const headers = {
     'apikey': SUPABASE_KEY,
@@ -48,76 +49,73 @@ module.exports = async function handler(req, res) {
 
     const funnel = (funnelArr || [])[0] || null;
 
-    // ── FULL CONVERSION TAIL (from HubSpot historical data) ───────────────
-    // % of leads that convert in each 30-day window
+    // Full conversion rate across 180 days
+    const TOTAL_CONV = 0.00622 + 0.00129 + 0.00150 + 0.00107 + 0.00107 + 0.00065;
+
+    // Conversion rates by window
     const CONV = {
-      w0:  0.00622, // 0-30d
-      w1:  0.00129, // 31-60d
-      w2:  0.00150, // 61-90d
-      w3:  0.00107, // 91-120d
-      w4:  0.00107, // 121-150d  (using 91-180d avg)
-      w5:  0.00065, // 151-180d
+      w0: 0.00622, w1: 0.00129, w2: 0.00150,
+      w3: 0.00107, w4: 0.00107, w5: 0.00065,
     };
-    // Note: 181-365d adds ~0.129% total, 366d+ adds ~0.193%
-    // We spread these across future months proportionally
-    const CONV_LATE = 0.00129 / 6;  // ~0.022% per month from 181-360d tail
-    const CONV_VERY_LATE = 0.00193 / 12; // ~0.016% per month from 360d+ tail
+    const CONV_LATE = 0.00129 / 6;
 
-    // Leads by 30-day window from Supabase (last 180 days)
-    const date150 = new Date(Date.now() - 150 * 86400000).toISOString().slice(0, 10);
-    const date120 = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
-
+    // Leads AND spend by 30-day window
     let L = { w0:0, w1:0, w2:0, w3:0, w4:0, w5:0 };
-    let spendW0 = 0;
+    let S = { w0:0, w1:0, w2:0 }; // spend for last 3 months (for lead-attributed CAC)
 
     for (const row of camps180 || []) {
       const d = row.date;
       const leads = parseInt(row.leads || 0);
       const spend = parseFloat(row.spend || 0);
-      if      (d >= date30)  { L.w0 += leads; spendW0 += spend; }
-      else if (d >= date60)  { L.w1 += leads; }
-      else if (d >= date90)  { L.w2 += leads; }
+      if      (d >= date30)  { L.w0 += leads; S.w0 += spend; }
+      else if (d >= date60)  { L.w1 += leads; S.w1 += spend; }
+      else if (d >= date90)  { L.w2 += leads; S.w2 += spend; }
       else if (d >= date120) { L.w3 += leads; }
       else if (d >= date150) { L.w4 += leads; }
-      else if (d >= date180) { L.w5 += leads; }
+      else                   { L.w5 += leads; }
     }
 
-    const projMonthlySpend = spendW0 > 0 ? spendW0 : Object.values(byPlatform).reduce((s,p)=>s+(p.spend||0),0);
-    const cpl = L.w0 > 0 ? spendW0 / L.w0 : 40;
-    const NL = projMonthlySpend / cpl; // new leads per projected month
+    // Lead-attributed CAC per month = spend / (leads × TOTAL_CONV)
+    // This varies by month based on actual spend and leads that month
+    const leadAttrCAC = [
+      { spend: S.w2, leads: L.w2 }, // 61-90d ago (oldest = leftmost bar)
+      { spend: S.w1, leads: L.w1 }, // 31-60d ago
+      { spend: S.w0, leads: L.w0 }, // 0-30d ago (most recent)
+    ].map(m => m.leads > 0 ? Math.round(m.spend / (m.leads * TOTAL_CONV)) : null);
 
-    // ── MONTH +1 ──────────────────────────────────────────────────────────
-    // Existing cohorts converting in their next window:
-    // L.w0 (0-30d old) → now converts at w1 rate (31-60d)
-    // L.w1 (31-60d old) → now converts at w2 rate (61-90d)
-    // L.w2 (61-90d old) → now converts at w3 rate (91-120d)
-    // L.w3 (91-120d old) → now converts at w4 rate
-    // L.w4 (121-150d old) → now converts at w5 rate
-    // L.w5 (151-180d old) → late tail
-    // NL (new leads this month) → converts at w0 rate
-    const m1_existing = (L.w0*CONV.w1) + (L.w1*CONV.w2) + (L.w2*CONV.w3) + (L.w3*CONV.w4) + (L.w4*CONV.w5) + (L.w5*CONV_LATE);
-    const m1_new      = NL * CONV.w0;
-    const m1_total    = m1_existing + m1_new;
-    const m1_cac      = m1_total > 0 ? Math.round(projMonthlySpend / m1_total) : null;
+    // Projected monthly spend and leads
+    const projMonthlySpend = S.w0 > 0 ? S.w0 : Object.values(byPlatform).reduce((s,p)=>s+(p.spend||0),0);
+    const cpl = L.w0 > 0 ? S.w0 / L.w0 : 40;
+    const NL  = projMonthlySpend / cpl;
 
-    // ── MONTH +2 ──────────────────────────────────────────────────────────
-    // Each cohort advances one window:
-    const m2_existing = (L.w0*CONV.w2) + (L.w1*CONV.w3) + (L.w2*CONV.w4) + (L.w3*CONV.w5) + (L.w4*CONV_LATE) + (NL*CONV.w1);
-    const m2_new      = NL * CONV.w0;
-    const m2_total    = m2_existing + m2_new;
-    const m2_cac      = m2_total > 0 ? Math.round(projMonthlySpend / m2_total) : null;
+    // Lead-attributed CAC for projected months (based on projected spend/leads)
+    const projLeadAttrCAC = [1, 2, 3].map(() =>
+      NL > 0 ? Math.round(projMonthlySpend / (NL * TOTAL_CONV)) : null
+    );
 
-    // ── MONTH +3 ──────────────────────────────────────────────────────────
-    const m3_existing = (L.w0*CONV.w3) + (L.w1*CONV.w4) + (L.w2*CONV.w5) + (L.w3*CONV_LATE) + (NL*CONV.w2) + (NL*CONV.w1);
-    const m3_new      = NL * CONV.w0;
-    const m3_total    = m3_existing + m3_new;
-    const m3_cac      = m3_total > 0 ? Math.round(projMonthlySpend / m3_total) : null;
+    // Projection model
+    const m1_existing = (L.w0*CONV.w1)+(L.w1*CONV.w2)+(L.w2*CONV.w3)+(L.w3*CONV.w4)+(L.w4*CONV.w5)+(L.w5*CONV_LATE);
+    const m1_new = NL*CONV.w0;
+    const m1_total = m1_existing+m1_new;
+    const m1_cac = m1_total>0 ? Math.round(projMonthlySpend/m1_total) : null;
+
+    const m2_existing = (L.w0*CONV.w2)+(L.w1*CONV.w3)+(L.w2*CONV.w4)+(L.w3*CONV.w5)+(L.w4*CONV_LATE)+(NL*CONV.w1);
+    const m2_new = NL*CONV.w0;
+    const m2_total = m2_existing+m2_new;
+    const m2_cac = m2_total>0 ? Math.round(projMonthlySpend/m2_total) : null;
+
+    const m3_existing = (L.w0*CONV.w3)+(L.w1*CONV.w4)+(L.w2*CONV.w5)+(L.w3*CONV_LATE)+(NL*CONV.w2)+(NL*CONV.w1);
+    const m3_new = NL*CONV.w0;
+    const m3_total = m3_existing+m3_new;
+    const m3_cac = m3_total>0 ? Math.round(projMonthlySpend/m3_total) : null;
 
     const projection = {
       leads_by_window: L,
       proj_monthly_spend: Math.round(projMonthlySpend),
       proj_leads_per_month: Math.round(NL),
       cpl: Math.round(cpl),
+      lead_attr_cac: leadAttrCAC,        // historical, varies per month
+      proj_lead_attr_cac: projLeadAttrCAC, // projected, varies if CPL changes
       months: [
         { cac: m1_cac, existing: parseFloat(m1_existing.toFixed(1)), new_leads: parseFloat(m1_new.toFixed(1)), total: parseFloat(m1_total.toFixed(1)) },
         { cac: m2_cac, existing: parseFloat(m2_existing.toFixed(1)), new_leads: parseFloat(m2_new.toFixed(1)), total: parseFloat(m2_total.toFixed(1)) },
@@ -132,7 +130,6 @@ module.exports = async function handler(req, res) {
     else if (days <= 60) { kollarom = funnel?.kollarom_60d||0;  customers = funnel?.customers_60d||0; }
     else                 { kollarom = funnel?.kollarom_90d||0;  customers = funnel?.customers_90d||0; }
 
-    // Aggregate ads
     const adMap = {};
     for (const row of ads || []) {
       if (!adMap[row.ad_id]) {
