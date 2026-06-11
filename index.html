@@ -166,7 +166,8 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:rgba(36,60,242,0.85)"></div>Faktisk CAC</div>
         <div class="legend-item"><div class="legend-dot" style="background:rgba(255,178,229,0.85)"></div>Projicerad CAC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(91,132,255,0.9);border-radius:50%"></div>Lead-baserad CAC (CPL ÷ konv.rate)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(91,132,255,0.9);border-radius:50%"></div>Lead-baserad CAC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(14,18,52,0.4);border-radius:50%"></div>3-mån rullande snitt</div>
         <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;border-radius:50%"></div>Target kr 1 500</div>
       </div>
     </div>
@@ -335,6 +336,19 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
           borderWidth: 2,
           borderDash: [4, 3],
           pointRadius: 0,
+          fill: false,
+          tension: 0,
+          order: 1,
+        },
+        {
+          label: '3-mån rullande snitt',
+          data: allLabels.map((_, i) => i < 3 ? avgCAC : null),
+          type: 'line',
+          borderColor: 'rgba(14,18,52,0.4)',
+          borderWidth: 2,
+          borderDash: [2, 3],
+          pointBackgroundColor: 'rgba(14,18,52,0.4)',
+          pointRadius: 4,
           fill: false,
           tension: 0,
           order: 1,
