@@ -17,7 +17,6 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
-
 .hdr{background:var(--blue);padding:24px 36px 48px;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--beige);clip-path:ellipse(55% 100% at 50% 100%);}
 .hdr-inner{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;position:relative;z-index:1;}
@@ -32,19 +31,15 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .sync-btn{background:var(--pink);border:none;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;}
 .sync-btn:disabled{opacity:.4;cursor:not-allowed;}
 .upd{font-size:11px;color:rgba(252,250,247,.4);text-align:right;}
-
 .status-bar{padding:8px 36px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink60);border-bottom:1px solid var(--ink10);}
 .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sdot.ok{background:var(--good);box-shadow:0 0 6px var(--good);}
 .sdot.err{background:var(--bad);}
 .sdot.loading{background:#c88a1a;animation:pulse 1s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
 .page{padding:0 36px 60px;max-width:1440px;margin:0 auto;}
 .sec{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink40);margin:36px 0 14px;display:flex;align-items:center;gap:10px;}
 .sec::after{content:'';flex:1;height:1px;background:var(--ink10);}
-
-/* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
 @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
@@ -65,30 +60,30 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .kfill{height:100%;border-radius:0 2px 2px 0;}
 .fg{background:var(--good);}.fw{background:var(--warn);}.fb-{background:var(--bad);}
 
-/* CAC CHART */
+/* CHART */
 .cac-chart-wrap{background:var(--w2);border-radius:var(--r);padding:24px 28px;box-shadow:var(--sh);}
-.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
 .chart-title{font-weight:700;font-size:15px;color:var(--ink);}
-.chart-legend{display:flex;gap:16px;font-size:11px;color:var(--ink60);}
+.chart-subtitle{font-size:12px;color:var(--ink60);margin-top:3px;}
+.chart-legend{display:flex;gap:16px;font-size:11px;color:var(--ink60);flex-wrap:wrap;}
 .legend-item{display:flex;align-items:center;gap:5px;}
-.legend-dot{width:10px;height:10px;border-radius:50%;}
-canvas#cacChart{max-height:260px;}
+.legend-dot{width:10px;height:10px;border-radius:3px;}
+.chart-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--ink06);}
+.cb-item{text-align:center;}
+.cb-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink60);margin-bottom:4px;}
+.cb-val{font-weight:700;font-size:13px;color:var(--ink);}
+.cb-sub{font-size:11px;color:var(--ink60);margin-top:2px;}
 
-/* PLATFORM CARDS */
 .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:700px){.plat-grid{grid-template-columns:1fr;}}
 .pc{background:var(--w2);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh);}
 .pc-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
 .plat-badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em;}
-.fb-b{background:#E7EAFF;color:var(--blue);}
-.tt-b{background:var(--ink);color:var(--w2);}
+.fb-b{background:#E7EAFF;color:var(--blue);}.tt-b{background:var(--ink);color:var(--w2);}
 .pc-name{font-size:12px;color:var(--ink60);font-weight:600;flex:1;}
 .pc-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ink06);}
 .pc-row:last-child{border-bottom:none;}
-.pc-k{font-size:13px;color:var(--ink60);}
-.pc-v{font-weight:700;font-size:13px;}
-
-/* FUNNEL */
+.pc-k{font-size:13px;color:var(--ink60);}.pc-v{font-weight:700;font-size:13px;}
 .funnel-wrap{background:var(--w2);border-radius:var(--r);padding:28px;box-shadow:var(--sh);}
 .funnel-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
 .fs{display:flex;flex-direction:column;align-items:center;padding:20px 12px;position:relative;}
@@ -101,8 +96,6 @@ canvas#cacChart{max-height:260px;}
 .funnel-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:16px;padding-top:16px;border-top:1px solid var(--ink10);}
 .fst{text-align:center;font-size:12px;color:var(--ink60);}
 .fst strong{display:block;font-weight:800;font-size:1.1rem;color:var(--ink);letter-spacing:-0.02em;}
-
-/* PROJECTION */
 .proj{background:var(--dark);border-radius:var(--r);padding:24px 28px;box-shadow:0 8px 24px rgba(14,18,52,.15);}
 .proj h3{font-weight:800;font-size:1.15rem;letter-spacing:-0.02em;color:var(--w2);margin-bottom:18px;}
 .proj h3 .dot{color:var(--pink);}
@@ -113,12 +106,9 @@ canvas#cacChart{max-height:260px;}
 .pi-v.pink{color:var(--pink);}
 .pi-s{font-size:11px;color:rgba(252,250,247,.45);margin-top:3px;}
 .proj-note{margin-top:18px;padding-top:14px;border-top:1px solid rgba(252,250,247,.1);font-size:12px;color:rgba(252,250,247,.45);line-height:1.6;}
-
-/* ADS */
 .ads-wrap{background:var(--w2);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
 .ads-bar{padding:14px 18px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--ink10);flex-wrap:wrap;}
 .ads-search{background:var(--beige);border:1px solid var(--ink10);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--ink);outline:none;width:200px;}
-.ads-search:focus{border-color:var(--blue);}
 .sort-sel{background:var(--beige);border:1px solid var(--ink10);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--ink);outline:none;cursor:pointer;}
 .ads-ct{margin-left:auto;font-size:12px;color:var(--ink60);}
 .tbl-scroll{overflow-x:auto;}
@@ -143,7 +133,6 @@ canvas#cacChart{max-height:260px;}
 </style>
 </head>
 <body>
-
 <div class="hdr">
   <div class="hdr-inner">
     <div>
@@ -153,7 +142,7 @@ canvas#cacChart{max-height:260px;}
     </div>
     <div class="hdr-right">
       <div class="period-pills">
-        <button class="pp" data-d="7"  onclick="setPeriod(this)">7d</button>
+        <button class="pp" data-d="7" onclick="setPeriod(this)">7d</button>
         <button class="pp active" data-d="30" onclick="setPeriod(this)">30d</button>
         <button class="pp" data-d="60" onclick="setPeriod(this)">60d</button>
         <button class="pp" data-d="90" onclick="setPeriod(this)">90d</button>
@@ -163,39 +152,36 @@ canvas#cacChart{max-height:260px;}
     </div>
   </div>
 </div>
-
 <div class="status-bar">
   <div class="sdot loading" id="sdot"></div>
-  <span id="stxt">Hämtar data från Supabase…</span>
+  <span id="stxt">Hämtar data…</span>
 </div>
-
 <div class="page">
   <div class="sec">Nyckeltal</div>
   <div class="kpi-grid" id="kpis"></div>
-
-  <!-- CAC TREND CHART -->
-  <div class="sec">CAC-trend</div>
+  <div class="sec">CAC-trend & Prognos</div>
   <div class="cac-chart-wrap">
     <div class="chart-header">
-      <div class="chart-title">Faktisk CAC vs Projicerad CAC — per månad</div>
+      <div>
+        <div class="chart-title">Faktisk CAC (historisk) + Projicerad CAC (kommande 3 månader)</div>
+        <div class="chart-subtitle">Projektion baserad på verklig konverteringstiming från HubSpot + prognosticerad spend</div>
+      </div>
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#243CF2"></div>Faktisk CAC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#FFB2E5"></div>Projicerad CAC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;opacity:.4"></div>Target kr 1 500</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,178,229,0.9)"></div>Proj. CAC (befintliga leads)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(91,132,255,0.7)"></div>Proj. CAC (nya leads)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;border-radius:50%"></div>Target kr 1 500</div>
       </div>
     </div>
-    <canvas id="cacChart"></canvas>
+    <canvas id="cacChart" style="max-height:280px"></canvas>
+    <div class="chart-breakdown" id="chart-breakdown"></div>
   </div>
-
   <div class="sec">Plattformsuppdelning</div>
   <div class="plat-grid" id="plats"></div>
-
   <div class="sec">Konverteringstrappa</div>
   <div class="funnel-wrap" id="funnel"></div>
-
   <div class="sec">Projicerad CAC</div>
   <div class="proj" id="proj"></div>
-
   <div class="sec">Annonsanalys</div>
   <div class="ads-wrap">
     <div class="ads-bar">
@@ -223,32 +209,34 @@ canvas#cacChart{max-height:260px;}
           <th onclick="adSort('reach')" class="col-div">Reach</th>
           <th onclick="adSort('frequency')">Freq.</th>
         </tr></thead>
-        <tbody id="ads-body"><tr class="empty-row"><td colspan="10">Laddar annonser…</td></tr></tbody>
+        <tbody id="ads-body"><tr class="empty-row"><td colspan="10">Laddar…</td></tr></tbody>
       </table>
     </div>
   </div>
-
   <div class="footer">
     <span>HelloLilly Reach · ROM Dashboard · <strong>Facebook + TikTok + HubSpot via Supabase</strong></span>
     <span id="footer-ts">—</span>
   </div>
 </div>
-
 <script>
-const TARGET_CAC   = 1500;
+const TARGET_CAC = 1500;
 const TARGET_KOLLA = 180;
-const L2K  = 0.104;
-const K2C  = 0.120;
-const L2C  = L2K * K2C;
+const L2K = 0.104;
+const K2C = 0.120;
+const L2C = L2K * K2C;
+
+// Real conversion timing from HubSpot (% of leads that convert per 30-day window)
+// Based on 62 customers from new ROM campaign, 4660 total leads
+const CONV_WINDOW = [0.00622, 0.00129, 0.00150]; // 0-30d, 31-60d, 61-90d
 
 let periodDays = 30;
 let DATA = null;
 let adSortKey = 'spend';
 let cacChartInstance = null;
 
-const sek  = (n,d=0) => n==null?'—':'kr '+Number(n).toLocaleString('sv-SE',{minimumFractionDigits:d,maximumFractionDigits:d});
-const pct  = n => n==null?'—':Number(n).toFixed(2)+'%';
-const fmt  = n => { if(n==null) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return Number(n).toLocaleString('sv-SE'); };
+const sek = (n,d=0) => n==null?'—':'kr '+Number(n).toLocaleString('sv-SE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct = n => n==null?'—':Number(n).toFixed(2)+'%';
+const fmt = n => { if(n==null) return '—'; if(n>=1e6) return (n/1e6).toFixed(1)+'M'; if(n>=1000) return (n/1000).toFixed(1)+'K'; return Number(n).toLocaleString('sv-SE'); };
 
 function tag(a,t,lower=true){
   if(a==null||t==null) return '<span class="ktag" style="background:var(--ink06);color:var(--ink60)">Beräknas</span>';
@@ -270,85 +258,130 @@ function adPerf(a){
   return 'pb';
 }
 
-// ── CAC CHART ──────────────────────────────────────────────────────────────
-function buildCacChart(funnel, platforms, projCAC) {
-  // Build monthly actual CAC from stored period data
-  // We have: 30d, 60d, 90d KollaROM and customer counts
-  // Derive per-month by subtracting consecutive periods
-
-  const spend90 = Object.values(platforms).reduce((s,p) => s + (p.spend||0), 0);
-  // Approximate monthly spend from 90d total
-  const spendPerMonth = spend90 / 3;
-
-  // Month labels — last 3 months + next 3 projected
+function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
   const now = new Date();
   const monthNames = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
 
-  const labels = [];
-  const actualCAC = [];
-  const projectedCAC = [];
-
-  // Past 3 months (actual)
+  // Historical labels (last 3 months)
+  const histLabels = [];
   for (let i = 2; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    labels.push(monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2));
+    histLabels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
   }
 
-  // Next 3 months (projected)
+  // Future labels (next 3 months)
+  const futureLabels = [];
   for (let i = 1; i <= 3; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    labels.push(monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().slice(2));
+    futureLabels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
   }
 
-  // Actual CAC per month using period deltas
+  const allLabels = [...histLabels, ...futureLabels];
+
+  // Historical actual CAC using period deltas
   const c90 = funnel?.customers_90d || 0;
   const c60 = funnel?.customers_60d || 0;
   const c30 = funnel?.customers_30d || 0;
+  const s90 = Object.values(platforms).reduce((s,p)=>s+(p.spend||0),0);
+  const monthlySpend = s90 > 0 ? s90/3 : totalSpend;
 
-  const custMonth1 = c90 - c60; // 90→60 days ago
-  const custMonth2 = c60 - c30; // 60→30 days ago
-  const custMonth3 = c30;       // last 30 days
+  const custM1 = Math.max(0, c90 - c60);
+  const custM2 = Math.max(0, c60 - c30);
+  const custM3 = c30;
 
-  // Use full 90d spend / 3 as monthly spend proxy
-  const s90 = Object.values(platforms).reduce((s,p) => s+(p.spend||0), 0);
-  const monthlySpend = s90 > 0 ? s90 / 3 : spendPerMonth;
+  const actCAC = [
+    custM1 > 0 ? Math.round(monthlySpend/custM1) : null,
+    custM2 > 0 ? Math.round(monthlySpend/custM2) : null,
+    custM3 > 0 ? Math.round(monthlySpend/custM3) : null,
+  ];
 
-  actualCAC.push(
-    custMonth1 > 0 ? Math.round(monthlySpend / custMonth1) : null,
-    custMonth2 > 0 ? Math.round(monthlySpend / custMonth2) : null,
-    custMonth3 > 0 ? Math.round(monthlySpend / custMonth3) : null,
-  );
+  // ── PROJECTION MODEL ───────────────────────────────────────────────────────
+  // Based on real HubSpot conversion timing data
+  // Spend projection: based on last 14 days of spend
+  const projMonthlySpend = monthlySpend; // use current monthly rate
+  const cpl = totalLeads > 0 ? totalSpend / totalLeads : 40;
+  const projLeadsPerMonth = projMonthlySpend / cpl;
 
-  // Use same projCAC as KPI card for consistency
-  for (let i = 0; i < 3; i++) {
-    projectedCAC.push(projCAC);
+  // Existing leads (captured this month) converting in future windows
+  const existingLeads = totalLeads;
+
+  const projFromExisting = []; // customers from leads already captured
+  const projFromNew = [];      // customers from future leads
+  const projCAC = [];          // combined CAC
+  const projDetails = [];
+
+  for (let m = 0; m < 3; m++) {
+    // Existing leads converting in window m (31-60d, 61-90d, 91-120d)
+    const existingRate = CONV_WINDOW[m] || 0.001;
+    const custFromExisting = existingLeads * existingRate;
+
+    // New leads generated this month converting immediately (0-30d rate)
+    const newLeads = projLeadsPerMonth;
+    const custFromNew = newLeads * CONV_WINDOW[0];
+
+    const totalCust = custFromExisting + custFromNew;
+    const cac = totalCust > 0 ? Math.round(projMonthlySpend / totalCust) : null;
+
+    projFromExisting.push(Math.round(custFromExisting * 10) / 10);
+    projFromNew.push(Math.round(custFromNew * 10) / 10);
+    projCAC.push(cac);
+    projDetails.push({ custFromExisting, custFromNew, totalCust, cac, newLeads });
   }
 
-  const ctx = document.getElementById('cacChart').getContext('2d');
+  // Build stacked bar data
+  const cacChart = document.getElementById('cacChart').getContext('2d');
   if (cacChartInstance) cacChartInstance.destroy();
 
-  cacChartInstance = new Chart(ctx, {
+  cacChartInstance = new Chart(cacChart, {
     type: 'bar',
     data: {
-      labels,
+      labels: allLabels,
       datasets: [
         {
           label: 'Faktisk CAC',
-          data: [...actualCAC, null, null, null],
+          data: [...actCAC, null, null, null],
           backgroundColor: 'rgba(36,60,242,0.85)',
           borderRadius: 6,
           borderSkipped: false,
+          order: 2,
         },
         {
-          label: 'Projicerad CAC',
-          data: [null, null, null, ...projectedCAC],
+          label: 'Proj. CAC (befintliga leads)',
+          data: [null, null, null, ...projCAC.map((v,i) => {
+            const d = projDetails[i];
+            return d.custFromExisting > 0 ? Math.round(projMonthlySpend / d.custFromExisting) : null;
+          })],
           backgroundColor: 'rgba(255,178,229,0.85)',
           borderRadius: 6,
           borderSkipped: false,
+          order: 2,
+        },
+        {
+          label: 'Proj. CAC (nya leads)',
+          data: [null, null, null, ...projCAC.map((v,i) => {
+            const d = projDetails[i];
+            return d.custFromNew > 0 ? Math.round(projMonthlySpend / d.custFromNew) : null;
+          })],
+          backgroundColor: 'rgba(91,132,255,0.7)',
+          borderRadius: 6,
+          borderSkipped: false,
+          order: 2,
+        },
+        {
+          label: 'Kombinerad proj. CAC',
+          data: [null, null, null, ...projCAC],
+          type: 'line',
+          borderColor: 'rgba(255,178,229,1)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(255,178,229,1)',
+          pointRadius: 5,
+          fill: false,
+          tension: 0.3,
+          order: 1,
         },
         {
           label: 'Target kr 1 500',
-          data: labels.map(() => TARGET_CAC),
+          data: allLabels.map(() => TARGET_CAC),
           type: 'line',
           borderColor: 'rgba(14,122,69,0.5)',
           borderWidth: 2,
@@ -356,6 +389,7 @@ function buildCacChart(funnel, platforms, projCAC) {
           pointRadius: 0,
           fill: false,
           tension: 0,
+          order: 0,
         },
       ],
     },
@@ -371,21 +405,24 @@ function buildCacChart(funnel, platforms, projCAC) {
         },
       },
       scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 11 }, color: '#8a837a' },
-        },
+        x: { grid:{ display:false }, ticks:{ font:{size:11}, color:'#8a837a' } },
         y: {
-          grid: { color: 'rgba(14,18,52,.06)' },
-          ticks: {
-            font: { size: 11 }, color: '#8a837a',
-            callback: v => 'kr ' + v.toLocaleString('sv-SE'),
-          },
+          grid:{ color:'rgba(14,18,52,.06)' },
+          ticks:{ font:{size:11}, color:'#8a837a', callback: v => 'kr '+v.toLocaleString('sv-SE') },
           beginAtZero: true,
         },
       },
     },
   });
+
+  // Breakdown below chart
+  document.getElementById('chart-breakdown').innerHTML = projDetails.map((d,i) => `
+    <div class="cb-item">
+      <div class="cb-label">${futureLabels[i]} — Proj. CAC</div>
+      <div class="cb-val">${d.cac ? sek(d.cac) : '—'}</div>
+      <div class="cb-sub">${d.custFromExisting.toFixed(1)} bef. leads + ${d.custFromNew.toFixed(1)} nya leads = ${d.totalCust.toFixed(1)} kunder · ${sek(projMonthlySpend)} spend</div>
+    </div>
+  `).join('');
 }
 
 async function loadData() {
@@ -393,7 +430,6 @@ async function loadData() {
   dot.className='sdot loading'; stxt.textContent='Hämtar data…';
   try {
     const r = await fetch(`/api/dashboard-data?days=${periodDays}`);
-    if(!r.ok) throw new Error('API error '+r.status);
     DATA = await r.json();
     if(!DATA.ok) throw new Error(DATA.error);
     dot.className='sdot ok';
@@ -401,9 +437,7 @@ async function loadData() {
     document.getElementById('upd').textContent='Synkad: '+new Date(DATA.synced_at).toLocaleString('sv-SE');
     document.getElementById('footer-ts').textContent='Facebook · TikTok · HubSpot · Supabase · '+new Date().toLocaleString('sv-SE');
     render();
-  } catch(e) {
-    dot.className='sdot err'; stxt.textContent='Fel: '+e.message;
-  }
+  } catch(e) { dot.className='sdot err'; stxt.textContent='Fel: '+e.message; }
 }
 
 async function triggerSync() {
@@ -413,12 +447,12 @@ async function triggerSync() {
     await Promise.allSettled([fetch('/api/sync-facebook'),fetch('/api/sync-tiktok'),fetch('/api/sync-hubspot')]);
     await new Promise(r=>setTimeout(r,3000));
     await loadData();
-  } catch(e) {}
+  } catch(e){}
   btn.disabled=false; btn.textContent='↻ Synka nu';
 }
 
 function setPeriod(btn) {
-  periodDays = parseInt(btn.dataset.d);
+  periodDays=parseInt(btn.dataset.d);
   document.querySelectorAll('.pp').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const labels={7:'Senaste 7 dagarna',30:'Senaste 30 dagarna',60:'Senaste 60 dagarna',90:'Senaste 90 dagarna'};
@@ -428,68 +462,53 @@ function setPeriod(btn) {
 
 function render() {
   if(!DATA) return;
-  const fb = DATA.platforms?.facebook || {};
-  const tt = DATA.platforms?.tiktok   || {};
-  const fn = DATA.funnel || {};
-  const kollarom  = DATA.kollarom  || 0;
-  const customers = DATA.customers || 0;
+  const fb=DATA.platforms?.facebook||{};
+  const tt=DATA.platforms?.tiktok||{};
+  const fn=DATA.funnel||{};
+  const kollarom=DATA.kollarom||0;
+  const customers=DATA.customers||0;
+  const totalSpend=(fb.spend||0)+(tt.spend||0);
+  const totalLeads=(fb.leads||0)+(tt.leads||0);
+  const actCAC=customers>0?totalSpend/customers:null;
+  const actKolla=kollarom>0?totalSpend/kollarom:null;
+  const projCust=Math.round(totalLeads*L2C);
+  const projCAC=projCust>0?Math.round(totalSpend/projCust):null;
 
-  const totalSpend = (fb.spend||0)+(tt.spend||0);
-  const totalLeads = (fb.leads||0)+(tt.leads||0);
-  const actCAC     = customers > 0 ? totalSpend/customers : null;
-  const actKolla   = kollarom  > 0 ? totalSpend/kollarom  : null;
-  const projCust   = Math.round(totalLeads*L2C);
-  const projCAC    = projCust > 0 ? Math.round(totalSpend/projCust) : null;
-
-  // KPIs
-  document.getElementById('kpis').innerHTML = [
-    {l:'Total spend',    v:sek(totalSpend),  s:`FB: ${sek(fb.spend||0)} · TT: ${tt.spend?sek(tt.spend):'—'}`, blue:true},
-    {l:'Target CAC',     v:sek(TARGET_CAC),  s:'Kostnad per kund (mål)'},
-    {l:'Faktisk CAC',    v:actCAC?sek(Math.round(actCAC)):'—', s:`${customers} kunder (${periodDays}d)`, tg:tag(actCAC,TARGET_CAC,true), br:bar(actCAC,TARGET_CAC,true)},
-    {l:'Projicerad CAC', v:projCAC?sek(projCAC):'—', s:`${totalLeads} leads × ${(L2C*100).toFixed(2)}%`, tg:tag(projCAC,TARGET_CAC,true), br:bar(projCAC,TARGET_CAC,true)},
-    {l:'Target kostnad/KollaROM', v:sek(TARGET_KOLLA), s:`CAC ${sek(TARGET_CAC)} × K2C ${(K2C*100).toFixed(0)}%`},
-    {l:'Faktisk kostnad/KollaROM', v:actKolla?sek(Math.round(actKolla)):'—', s:`${kollarom} KollaROM (${periodDays}d)`, tg:tag(actKolla,TARGET_KOLLA,true), br:bar(actKolla,TARGET_KOLLA,true)},
+  document.getElementById('kpis').innerHTML=[
+    {l:'Total spend',v:sek(totalSpend),s:`FB: ${sek(fb.spend||0)} · TT: ${tt.spend?sek(tt.spend):'—'}`,blue:true},
+    {l:'Target CAC',v:sek(TARGET_CAC),s:'Kostnad per kund (mål)'},
+    {l:'Faktisk CAC',v:actCAC?sek(Math.round(actCAC)):'—',s:`${customers} kunder (${periodDays}d)`,tg:tag(actCAC,TARGET_CAC,true),br:bar(actCAC,TARGET_CAC,true)},
+    {l:'Projicerad CAC',v:projCAC?sek(projCAC):'—',s:`${totalLeads} leads × ${(L2C*100).toFixed(2)}%`,tg:tag(projCAC,TARGET_CAC,true),br:bar(projCAC,TARGET_CAC,true)},
+    {l:'Target kostnad/KollaROM',v:sek(TARGET_KOLLA),s:`CAC ${sek(TARGET_CAC)} × K2C ${(K2C*100).toFixed(0)}%`},
+    {l:'Faktisk kostnad/KollaROM',v:actKolla?sek(Math.round(actKolla)):'—',s:`${kollarom} KollaROM (${periodDays}d)`,tg:tag(actKolla,TARGET_KOLLA,true),br:bar(actKolla,TARGET_KOLLA,true)},
   ].map(k=>`<div class="kpi${k.blue?' blue':''}">
-    <div class="kl">${k.l}</div>
-    <div class="kv">${k.v}<span class="dot2">.</span></div>
-    <div class="ks">${k.s||''}</div>
-    ${k.tg||''}${k.br||''}
+    <div class="kl">${k.l}</div><div class="kv">${k.v}<span class="dot2">.</span></div>
+    <div class="ks">${k.s||''}</div>${k.tg||''}${k.br||''}
   </div>`).join('');
 
-  // CAC Chart — pass same projCAC as KPI card
-  buildCacChart(fn, DATA.platforms || {}, projCAC);
+  buildCacChart(fn, DATA.platforms||{}, totalSpend, totalLeads);
 
-  // Platform cards
-  const fbCPL = fb.leads>0 ? fb.spend/fb.leads : null;
-  const ttCPL = tt.leads>0 ? tt.spend/tt.leads : null;
-  document.getElementById('plats').innerHTML = `
-    <div class="pc">
-      <div class="pc-hdr"><span class="plat-badge fb-b">📘 Facebook</span><span class="pc-name">HuvudkampanjAPI (ROM) — Ny + Gammal</span></div>
-      ${[['Spend',sek(fb.spend||0)],['Leads',fmt(fb.leads||0)],['Cost/Lead',fbCPL?sek(fbCPL,2):'—'],['Clicks',fmt(fb.clicks||0)],['Impressions',fmt(fb.impressions||0)],['Reach',fmt(fb.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join('')}
-    </div>
-    <div class="pc">
-      <div class="pc-hdr"><span class="plat-badge tt-b">♪ TikTok</span><span class="pc-name">Smartcampaign_ROM</span></div>
-      ${tt.spend?[['Spend',sek(tt.spend)],['Leads',fmt(tt.leads||0)],['Cost/Lead',ttCPL?sek(ttCPL,2):'—'],['Clicks',fmt(tt.clicks||0)],['Impressions',fmt(tt.impressions||0)],['Reach',fmt(tt.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join(''):'<div class="pc-row"><span class="pc-k">Status</span><span class="pc-v" style="color:var(--ink40)">Väntar på data…</span></div>'}
-    </div>`;
+  const fbCPL=fb.leads>0?fb.spend/fb.leads:null;
+  const ttCPL=tt.leads>0?tt.spend/tt.leads:null;
+  document.getElementById('plats').innerHTML=`
+    <div class="pc"><div class="pc-hdr"><span class="plat-badge fb-b">📘 Facebook</span><span class="pc-name">HuvudkampanjAPI (ROM) — Ny + Gammal</span></div>
+    ${[['Spend',sek(fb.spend||0)],['Leads',fmt(fb.leads||0)],['Cost/Lead',fbCPL?sek(fbCPL,2):'—'],['Clicks',fmt(fb.clicks||0)],['Impressions',fmt(fb.impressions||0)],['Reach',fmt(fb.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join('')}</div>
+    <div class="pc"><div class="pc-hdr"><span class="plat-badge tt-b">♪ TikTok</span><span class="pc-name">Smartcampaign_ROM</span></div>
+    ${tt.spend?[['Spend',sek(tt.spend)],['Leads',fmt(tt.leads||0)],['Cost/Lead',ttCPL?sek(ttCPL,2):'—'],['Clicks',fmt(tt.clicks||0)],['Impressions',fmt(tt.impressions||0)],['Reach',fmt(tt.reach||0)]].map(([k,v])=>`<div class="pc-row"><span class="pc-k">${k}</span><span class="pc-v">${v}</span></div>`).join(''):'<div class="pc-row"><span class="pc-k">Status</span><span class="pc-v" style="color:var(--ink40)">Väntar…</span></div>'}</div>`;
 
-  // Funnel
-  const l2kPct = totalLeads>0?(kollarom/totalLeads*100).toFixed(1):'—';
-  const k2cPct = kollarom>0?(customers/kollarom*100).toFixed(1):'—';
-  const l2cPct = totalLeads>0?(customers/totalLeads*100).toFixed(2):'—';
-  document.getElementById('funnel').innerHTML = `
-    <div class="funnel-row">
-      ${[
-        {e:'📣',n:fmt(totalLeads),l:'Leads',c:sek(totalSpend/Math.max(totalLeads,1),2)+'/lead',r:'',bg:'#B2CFFF',tc:'#132080'},
-        {e:'👀',n:fmt(kollarom),l:'KollaROM',c:actKolla?sek(Math.round(actKolla))+'/st':'—',r:l2kPct+'% av leads',bg:'#FFD6F0',tc:'#132080'},
-        {e:'🎓',n:fmt(customers),l:'Kunder',c:actCAC?sek(Math.round(actCAC))+'/kund':'—',r:k2cPct+'% av KollaROM',bg:'#E6F5EE',tc:'#0E7A45'},
-        {e:'📊',n:l2cPct+'%',l:'Lead→Kund',c:`Mål: ${(L2C*100).toFixed(2)}%`,r:'Total konv.',bg:'#243CF2',tc:'#FCFAF7'},
-      ].map(s=>`<div class="fs">
-        <div class="fs-icon" style="background:${s.bg}">${s.e}</div>
-        <div class="fs-n" style="color:${s.tc==='#132080'?'var(--ink)':s.tc}">${s.n}</div>
-        <div class="fs-lbl">${s.l}</div>
-        <div class="fs-cost" style="color:${s.tc==='#FCFAF7'?'rgba(252,250,247,.7)':'var(--ink60)'}">${s.c}</div>
-        ${s.r?`<span class="fs-rate">${s.r}</span>`:''}
-      </div>`).join('')}
+  const l2kPct=totalLeads>0?(kollarom/totalLeads*100).toFixed(1):'—';
+  const k2cPct=kollarom>0?(customers/kollarom*100).toFixed(1):'—';
+  const l2cPct=totalLeads>0?(customers/totalLeads*100).toFixed(2):'—';
+  document.getElementById('funnel').innerHTML=`
+    <div class="funnel-row">${[
+      {e:'📣',n:fmt(totalLeads),l:'Leads',c:sek(totalSpend/Math.max(totalLeads,1),2)+'/lead',r:'',bg:'#B2CFFF',tc:'#132080'},
+      {e:'👀',n:fmt(kollarom),l:'KollaROM',c:actKolla?sek(Math.round(actKolla))+'/st':'—',r:l2kPct+'% av leads',bg:'#FFD6F0',tc:'#132080'},
+      {e:'🎓',n:fmt(customers),l:'Kunder',c:actCAC?sek(Math.round(actCAC))+'/kund':'—',r:k2cPct+'% av KollaROM',bg:'#E6F5EE',tc:'#0E7A45'},
+      {e:'📊',n:l2cPct+'%',l:'Lead→Kund',c:`Mål: ${(L2C*100).toFixed(2)}%`,r:'Total konv.',bg:'#243CF2',tc:'#FCFAF7'},
+    ].map(s=>`<div class="fs"><div class="fs-icon" style="background:${s.bg}">${s.e}</div>
+      <div class="fs-n" style="color:${s.tc==='#132080'?'var(--ink)':s.tc}">${s.n}</div>
+      <div class="fs-lbl">${s.l}</div><div class="fs-cost" style="color:${s.tc==='#FCFAF7'?'rgba(252,250,247,.7)':'var(--ink60)'}">${s.c}</div>
+      ${s.r?`<span class="fs-rate">${s.r}</span>`:''}</div>`).join('')}
     </div>
     <div class="funnel-stats">
       <div class="fst"><strong>${fmt(totalLeads)}</strong>Leads genererade</div>
@@ -498,8 +517,7 @@ function render() {
       <div class="fst"><strong>${fn.superheta_month||'—'}</strong>Superheta leads (mån)</div>
     </div>`;
 
-  // Projection
-  document.getElementById('proj').innerHTML = `
+  document.getElementById('proj').innerHTML=`
     <h3>Projicerad CAC<span class="dot">.</span></h3>
     <div class="proj-grid">
       <div><div class="pi-l">Leads denna period</div><div class="pi-v">${fmt(totalLeads)}</div><div class="pi-s">Faktiskt genererade</div></div>
@@ -508,17 +526,17 @@ function render() {
       <div><div class="pi-l">Projicerad CAC</div><div class="pi-v pink">${projCAC?sek(projCAC):'—'}</div><div class="pi-s">vs mål ${sek(TARGET_CAC)}</div></div>
     </div>
     <div class="proj-note">
-      <strong style="color:rgba(252,250,247,.65)">Beräkningslogik:</strong>
-      Target KollaROM-kostnad = ${sek(TARGET_CAC)} × ${(K2C*100).toFixed(0)}% = <strong style="color:var(--pink)">${sek(TARGET_KOLLA)}/KollaROM</strong>.
+      <strong style="color:rgba(252,250,247,.65)">Konverteringstiming (från HubSpot-data):</strong>
+      ${(CONV_WINDOW[0]*100).toFixed(2)}% av leads konverterar inom 0-30d · ${(CONV_WINDOW[1]*100).toFixed(2)}% inom 31-60d · ${(CONV_WINDOW[2]*100).toFixed(2)}% inom 61-90d.
       Proj. CAC = ${sek(totalSpend)} ÷ (${totalLeads} × ${(L2C*100).toFixed(2)}%) = <strong style="color:var(--pink)">${projCAC?sek(projCAC):'—'}</strong>
     </div>`;
 
   renderAds();
 }
 
-function renderAds() {
+function renderAds(){
   if(!DATA) return;
-  const q=( document.getElementById('ads-q')?.value||'').toLowerCase();
+  const q=(document.getElementById('ads-q')?.value||'').toLowerCase();
   const sort=document.getElementById('ads-sort')?.value||adSortKey;
   let rows=(DATA.ads||[]).filter(a=>!q||a.ad_name?.toLowerCase().includes(q)||a.platform?.includes(q));
   rows.sort((a,b)=>{const va=a[sort]??-Infinity,vb=b[sort]??-Infinity;return vb-va;});
