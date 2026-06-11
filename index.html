@@ -59,21 +59,18 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .kbar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--ink10);}
 .kfill{height:100%;border-radius:0 2px 2px 0;}
 .fg{background:var(--good);}.fw{background:var(--warn);}.fb-{background:var(--bad);}
-
-/* CHART */
 .cac-chart-wrap{background:var(--w2);border-radius:var(--r);padding:24px 28px;box-shadow:var(--sh);}
 .chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
 .chart-title{font-weight:700;font-size:15px;color:var(--ink);}
 .chart-subtitle{font-size:12px;color:var(--ink60);margin-top:3px;}
-.chart-legend{display:flex;gap:16px;font-size:11px;color:var(--ink60);flex-wrap:wrap;}
+.chart-legend{display:flex;gap:16px;font-size:11px;color:var(--ink60);flex-wrap:wrap;align-items:center;}
 .legend-item{display:flex;align-items:center;gap:5px;}
 .legend-dot{width:10px;height:10px;border-radius:3px;}
 .chart-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--ink06);}
 .cb-item{text-align:center;}
 .cb-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink60);margin-bottom:4px;}
-.cb-val{font-weight:700;font-size:13px;color:var(--ink);}
+.cb-val{font-weight:700;font-size:14px;color:var(--ink);}
 .cb-sub{font-size:11px;color:var(--ink60);margin-top:2px;}
-
 .plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:700px){.plat-grid{grid-template-columns:1fr;}}
 .pc{background:var(--w2);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh);}
@@ -167,9 +164,8 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
         <div class="chart-subtitle">Projektion baserad på verklig konverteringstiming från HubSpot + prognosticerad spend</div>
       </div>
       <div class="chart-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#243CF2"></div>Faktisk CAC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,178,229,0.9)"></div>Proj. CAC (befintliga leads)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(91,132,255,0.7)"></div>Proj. CAC (nya leads)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(36,60,242,0.85)"></div>Faktisk CAC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,178,229,0.85)"></div>Projicerad CAC</div>
         <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;border-radius:50%"></div>Target kr 1 500</div>
       </div>
     </div>
@@ -219,14 +215,13 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
   </div>
 </div>
 <script>
-const TARGET_CAC = 1500;
+const TARGET_CAC   = 1500;
 const TARGET_KOLLA = 180;
-const L2K = 0.104;
-const K2C = 0.120;
-const L2C = L2K * K2C;
+const L2K  = 0.104;
+const K2C  = 0.120;
+const L2C  = L2K * K2C;
 
-// Real conversion timing from HubSpot (% of leads that convert per 30-day window)
-// Based on 62 customers from new ROM campaign, 4660 total leads
+// Real conversion timing from HubSpot — % of leads converting per 30d window
 const CONV_WINDOW = [0.00622, 0.00129, 0.00150]; // 0-30d, 31-60d, 61-90d
 
 let periodDays = 30;
@@ -262,27 +257,23 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
   const now = new Date();
   const monthNames = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
 
-  // Historical labels (last 3 months)
   const histLabels = [];
   for (let i = 2; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     histLabels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
   }
-
-  // Future labels (next 3 months)
   const futureLabels = [];
   for (let i = 1; i <= 3; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     futureLabels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
   }
-
   const allLabels = [...histLabels, ...futureLabels];
 
   // Historical actual CAC using period deltas
   const c90 = funnel?.customers_90d || 0;
   const c60 = funnel?.customers_60d || 0;
   const c30 = funnel?.customers_30d || 0;
-  const s90 = Object.values(platforms).reduce((s,p)=>s+(p.spend||0),0);
+  const s90 = Object.values(platforms).reduce((s,p) => s+(p.spend||0), 0);
   const monthlySpend = s90 > 0 ? s90/3 : totalSpend;
 
   const custM1 = Math.max(0, c90 - c60);
@@ -295,44 +286,28 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
     custM3 > 0 ? Math.round(monthlySpend/custM3) : null,
   ];
 
-  // ── PROJECTION MODEL ───────────────────────────────────────────────────────
-  // Based on real HubSpot conversion timing data
-  // Spend projection: based on last 14 days of spend
-  const projMonthlySpend = monthlySpend; // use current monthly rate
-  const cpl = totalLeads > 0 ? totalSpend / totalLeads : 40;
+  // Projected spend per month based on current rate
+  const projMonthlySpend = monthlySpend;
+  const cpl = totalLeads > 0 ? totalSpend/totalLeads : 40;
   const projLeadsPerMonth = projMonthlySpend / cpl;
-
-  // Existing leads (captured this month) converting in future windows
   const existingLeads = totalLeads;
 
-  const projFromExisting = []; // customers from leads already captured
-  const projFromNew = [];      // customers from future leads
-  const projCAC = [];          // combined CAC
+  // Combined CAC: total spend / (customers from existing leads tail + customers from new leads)
   const projDetails = [];
-
   for (let m = 0; m < 3; m++) {
-    // Existing leads converting in window m (31-60d, 61-90d, 91-120d)
-    const existingRate = CONV_WINDOW[m] || 0.001;
-    const custFromExisting = existingLeads * existingRate;
-
-    // New leads generated this month converting immediately (0-30d rate)
-    const newLeads = projLeadsPerMonth;
-    const custFromNew = newLeads * CONV_WINDOW[0];
-
-    const totalCust = custFromExisting + custFromNew;
-    const cac = totalCust > 0 ? Math.round(projMonthlySpend / totalCust) : null;
-
-    projFromExisting.push(Math.round(custFromExisting * 10) / 10);
-    projFromNew.push(Math.round(custFromNew * 10) / 10);
-    projCAC.push(cac);
-    projDetails.push({ custFromExisting, custFromNew, totalCust, cac, newLeads });
+    const custFromExisting = existingLeads * (CONV_WINDOW[m] || 0.001);
+    const custFromNew      = projLeadsPerMonth * CONV_WINDOW[0];
+    const totalCust        = custFromExisting + custFromNew;
+    const cac              = totalCust > 0 ? Math.round(projMonthlySpend / totalCust) : null;
+    projDetails.push({ custFromExisting, custFromNew, totalCust, cac });
   }
 
-  // Build stacked bar data
-  const cacChart = document.getElementById('cacChart').getContext('2d');
+  const projCAC = projDetails.map(d => d.cac);
+
+  const ctx = document.getElementById('cacChart').getContext('2d');
   if (cacChartInstance) cacChartInstance.destroy();
 
-  cacChartInstance = new Chart(cacChart, {
+  cacChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: allLabels,
@@ -346,38 +321,12 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
           order: 2,
         },
         {
-          label: 'Proj. CAC (befintliga leads)',
-          data: [null, null, null, ...projCAC.map((v,i) => {
-            const d = projDetails[i];
-            return d.custFromExisting > 0 ? Math.round(projMonthlySpend / d.custFromExisting) : null;
-          })],
+          label: 'Projicerad CAC',
+          data: [null, null, null, ...projCAC],
           backgroundColor: 'rgba(255,178,229,0.85)',
           borderRadius: 6,
           borderSkipped: false,
           order: 2,
-        },
-        {
-          label: 'Proj. CAC (nya leads)',
-          data: [null, null, null, ...projCAC.map((v,i) => {
-            const d = projDetails[i];
-            return d.custFromNew > 0 ? Math.round(projMonthlySpend / d.custFromNew) : null;
-          })],
-          backgroundColor: 'rgba(91,132,255,0.7)',
-          borderRadius: 6,
-          borderSkipped: false,
-          order: 2,
-        },
-        {
-          label: 'Kombinerad proj. CAC',
-          data: [null, null, null, ...projCAC],
-          type: 'line',
-          borderColor: 'rgba(255,178,229,1)',
-          borderWidth: 2,
-          pointBackgroundColor: 'rgba(255,178,229,1)',
-          pointRadius: 5,
-          fill: false,
-          tension: 0.3,
-          order: 1,
         },
         {
           label: 'Target kr 1 500',
@@ -400,16 +349,18 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => ctx.parsed.y != null ? `${ctx.dataset.label}: kr ${Math.round(ctx.parsed.y).toLocaleString('sv-SE')}` : '',
+            label: ctx => ctx.parsed.y != null
+              ? `${ctx.dataset.label}: kr ${Math.round(ctx.parsed.y).toLocaleString('sv-SE')}`
+              : '',
           },
         },
       },
       scales: {
-        x: { grid:{ display:false }, ticks:{ font:{size:11}, color:'#8a837a' } },
+        x: { grid:{display:false}, ticks:{font:{size:11},color:'#8a837a'} },
         y: {
-          grid:{ color:'rgba(14,18,52,.06)' },
-          ticks:{ font:{size:11}, color:'#8a837a', callback: v => 'kr '+v.toLocaleString('sv-SE') },
-          beginAtZero: true,
+          grid:{color:'rgba(14,18,52,.06)'},
+          ticks:{font:{size:11},color:'#8a837a',callback:v=>'kr '+v.toLocaleString('sv-SE')},
+          beginAtZero:true,
         },
       },
     },
@@ -418,9 +369,12 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads) {
   // Breakdown below chart
   document.getElementById('chart-breakdown').innerHTML = projDetails.map((d,i) => `
     <div class="cb-item">
-      <div class="cb-label">${futureLabels[i]} — Proj. CAC</div>
+      <div class="cb-label">${futureLabels[i]}</div>
       <div class="cb-val">${d.cac ? sek(d.cac) : '—'}</div>
-      <div class="cb-sub">${d.custFromExisting.toFixed(1)} bef. leads + ${d.custFromNew.toFixed(1)} nya leads = ${d.totalCust.toFixed(1)} kunder · ${sek(projMonthlySpend)} spend</div>
+      <div class="cb-sub">
+        ${d.custFromExisting.toFixed(1)} bef. leads + ${d.custFromNew.toFixed(1)} nya leads
+        = ${d.totalCust.toFixed(1)} kunder · ${sek(Math.round(projMonthlySpend))} spend
+      </div>
     </div>
   `).join('');
 }
@@ -507,7 +461,8 @@ function render() {
       {e:'📊',n:l2cPct+'%',l:'Lead→Kund',c:`Mål: ${(L2C*100).toFixed(2)}%`,r:'Total konv.',bg:'#243CF2',tc:'#FCFAF7'},
     ].map(s=>`<div class="fs"><div class="fs-icon" style="background:${s.bg}">${s.e}</div>
       <div class="fs-n" style="color:${s.tc==='#132080'?'var(--ink)':s.tc}">${s.n}</div>
-      <div class="fs-lbl">${s.l}</div><div class="fs-cost" style="color:${s.tc==='#FCFAF7'?'rgba(252,250,247,.7)':'var(--ink60)'}">${s.c}</div>
+      <div class="fs-lbl">${s.l}</div>
+      <div class="fs-cost" style="color:${s.tc==='#FCFAF7'?'rgba(252,250,247,.7)':'var(--ink60)'}">${s.c}</div>
       ${s.r?`<span class="fs-rate">${s.r}</span>`:''}</div>`).join('')}
     </div>
     <div class="funnel-stats">
@@ -526,8 +481,10 @@ function render() {
       <div><div class="pi-l">Projicerad CAC</div><div class="pi-v pink">${projCAC?sek(projCAC):'—'}</div><div class="pi-s">vs mål ${sek(TARGET_CAC)}</div></div>
     </div>
     <div class="proj-note">
-      <strong style="color:rgba(252,250,247,.65)">Konverteringstiming (från HubSpot-data):</strong>
-      ${(CONV_WINDOW[0]*100).toFixed(2)}% av leads konverterar inom 0-30d · ${(CONV_WINDOW[1]*100).toFixed(2)}% inom 31-60d · ${(CONV_WINDOW[2]*100).toFixed(2)}% inom 61-90d.
+      <strong style="color:rgba(252,250,247,.65)">Konverteringstiming (HubSpot-data):</strong>
+      ${(CONV_WINDOW[0]*100).toFixed(2)}% av leads konverterar inom 0-30d ·
+      ${(CONV_WINDOW[1]*100).toFixed(2)}% inom 31-60d ·
+      ${(CONV_WINDOW[2]*100).toFixed(2)}% inom 61-90d.
       Proj. CAC = ${sek(totalSpend)} ÷ (${totalLeads} × ${(L2C*100).toFixed(2)}%) = <strong style="color:var(--pink)">${projCAC?sek(projCAC):'—'}</strong>
     </div>`;
 
