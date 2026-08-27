@@ -326,17 +326,6 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
     },
   });
 
-  // Breakdown below chart using server projection
-  document.getElementById('chart-breakdown').innerHTML = (projection?.months || []).map((m,i) => `
-    <div class="cb-item">
-      <div class="cb-label">${futureLabels[i]}</div>
-      <div class="cb-val">${m.cac ? sek(m.cac) : '—'}</div>
-      <div class="cb-sub">
-        ${(m.existing||0).toFixed(1)} bef. leads + ${(m.new_leads||0).toFixed(1)} nya leads
-        = ${(m.total||0).toFixed(1)} kunder
-      </div>
-    </div>
-  `).join('');
 }
 
 async function loadData() {
