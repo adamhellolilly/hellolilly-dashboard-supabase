@@ -49,6 +49,14 @@ module.exports = async function handler(req, res) {
 
     const funnel = (funnelArr || [])[0] || null;
 
+    // Override TikTok leads with HubSpot data (more accurate than TikTok API)
+    const ttLeadsMonth = funnel?.tiktok_leads_month || 0;
+    if (byPlatform['tiktok']) {
+      byPlatform['tiktok'].leads = ttLeadsMonth;
+    } else if (ttLeadsMonth > 0) {
+      byPlatform['tiktok'] = { spend: byPlatform['tiktok']?.spend || 0, impressions: 0, reach: 0, clicks: 0, leads: ttLeadsMonth };
+    }
+
     // Full conversion rate across 180 days
     const TOTAL_CONV = 0.00622 + 0.00129 + 0.00150 + 0.00107 + 0.00107 + 0.00065;
 
@@ -77,8 +85,7 @@ module.exports = async function handler(req, res) {
 
     // Add TikTok leads from HubSpot for current month only (w0)
     // We only have current month TikTok data reliably
-    const ttLeads = funnel?.tiktok_leads_month || 0;
-    L.w0 += ttLeads;
+    L.w0 += ttLeadsMonth;
 
     // Lead-attributed CAC per month = spend / (leads × TOTAL_CONV)
     // This varies by month based on actual spend and leads that month
