@@ -160,18 +160,15 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
   <div class="cac-chart-wrap">
     <div class="chart-header">
       <div>
-        <div class="chart-title">Faktisk CAC (historisk) + Projicerad CAC (kommande 3 månader)</div>
-        <div class="chart-subtitle">Projektion baserad på verklig konverteringstiming från HubSpot + prognosticerad spend</div>
+        <div class="chart-title">Lead-baserad CAC — senaste 3 månader</div>
+        <div class="chart-subtitle">Spend ÷ (leads × 1.18% konverteringsrate) per månad</div>
       </div>
       <div class="chart-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(36,60,242,0.85)"></div>Faktisk CAC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,178,229,0.85)"></div>Projicerad CAC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(91,132,255,0.9);border-radius:50%"></div>Lead-baserad CAC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(36,60,242,0.85)"></div>Lead-baserad CAC</div>
         <div class="legend-item"><div class="legend-dot" style="background:#0E7A45;border-radius:50%"></div>Target kr 1 500</div>
       </div>
     </div>
     <canvas id="cacChart" style="max-height:280px"></canvas>
-    <div class="chart-breakdown" id="chart-breakdown"></div>
   </div>
   <div class="sec">Plattformsuppdelning</div>
   <div class="plat-grid" id="plats"></div>
@@ -263,44 +260,20 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     histLabels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
   }
-  const futureLabels = [];
-  for (let i = 1; i <= 3; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    futureLabels.push(monthNames[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2));
-  }
-  const allLabels = [...histLabels, ...futureLabels];
+  const allLabels = histLabels;
 
-  // Historical actual CAC using period deltas
-  const c90 = funnel?.customers_90d || 0;
-  const c60 = funnel?.customers_60d || 0;
-  const c30 = funnel?.customers_30d || 0;
-  const s90 = Object.values(platforms).reduce((s,p) => s+(p.spend||0), 0);
-  const monthlySpend = s90 > 0 ? s90/3 : totalSpend;
-
-  const custM1 = Math.max(0, c90 - c60);
-  const custM2 = Math.max(0, c60 - c30);
-  const custM3 = c30;
-
-  const actCAC = [
-    custM1 > 0 ? Math.round(monthlySpend/custM1) : null,
-    custM2 > 0 ? Math.round(monthlySpend/custM2) : null,
-    custM3 > 0 ? Math.round(monthlySpend/custM3) : null,
-  ];
-
-  // Use server-calculated projection
-  const projMonths = projection?.months || [];
-  const projCAC = projMonths.map(m => m.cac);
-
-  // Lead-attributed CAC per month from server (varies by actual spend/leads that month)
-  const histLeadCAC = projection?.lead_attr_cac || [];      // [month-3, month-2, month-1]
-  const projLeadCAC = projection?.proj_lead_attr_cac || []; // [month+1, month+2, month+3]
-  const leadAttrData = [
-    ...histLeadCAC,    // 3 historical values (vary per month)
-    ...projLeadCAC,    // 3 projected values
-  ];
+  // Lead-attributed CAC per month from server (historical only)
+  const histLeadCAC = projection?.lead_attr_cac || [];
+  const leadAttrData = [...histLeadCAC]; // 3 historical values only
 
   const ctx = document.getElementById('cacChart').getContext('2d');
   if (cacChartInstance) cacChartInstance.destroy();
+
+  const barColors = [
+    'rgba(36,60,242,0.85)',
+    'rgba(36,60,242,0.85)',
+    'rgba(36,60,242,0.85)',
+  ];
 
   cacChartInstance = new Chart(ctx, {
     type: 'bar',
@@ -308,32 +281,12 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
       labels: allLabels,
       datasets: [
         {
-          label: 'Faktisk CAC',
-          data: [...actCAC, null, null, null],
-          backgroundColor: 'rgba(36,60,242,0.85)',
-          borderRadius: 6,
-          borderSkipped: false,
-          order: 3,
-        },
-        {
-          label: 'Projicerad CAC',
-          data: [null, null, null, ...projCAC],
-          backgroundColor: 'rgba(255,178,229,0.85)',
-          borderRadius: 6,
-          borderSkipped: false,
-          order: 3,
-        },
-        {
-          label: 'Lead-baserad CAC (CPL ÷ konv.)',
+          label: 'Lead-baserad CAC',
           data: leadAttrData,
-          type: 'line',
-          borderColor: 'rgba(91,132,255,0.9)',
-          borderWidth: 2,
-          borderDash: [4, 3],
-          pointRadius: 0,
-          fill: false,
-          tension: 0,
-          order: 1,
+          backgroundColor: barColors,
+          borderRadius: 6,
+          borderSkipped: false,
+          order: 2,
         },
         {
           label: 'Target kr 1 500',
