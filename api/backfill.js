@@ -13,11 +13,15 @@ module.exports = async function handler(req, res) {
   const fbAccount    = process.env.FB_AD_ACCOUNT_ID;
   const ttToken      = process.env.TIKTOK_ACCESS_TOKEN;
   const ttAdvertiser = process.env.TIKTOK_ADVERTISER_ID;
-  const days         = parseInt(req.query.days || '90');
+  const days         = parseInt(req.query.days || '30');
+
+  // Calculate specific date range instead of using date_preset
+  const endDate   = new Date().toISOString().slice(0, 10);
+  const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
 
   async function supabaseUpsert(table, rows, onConflict) {
     if (!rows.length) return;
-    const batchSize = 200;
+    const batchSize = 100;
     for (let i = 0; i < rows.length; i += batchSize) {
       const batch = rows.slice(i, i + batchSize);
       const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`, {
@@ -48,7 +52,7 @@ module.exports = async function handler(req, res) {
     const filter = JSON.stringify(ROM_CAMPS);
 
     const campRes = await fetch(
-      `${FB_BASE}/${fbAccount}/insights?fields=${fields}&date_preset=maximum&level=campaign&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=500&access_token=${fbToken}`
+      `${FB_BASE}/${fbAccount}/insights?fields=${fields}&time_range={"since":"${startDate}","until":"${endDate}"}&level=campaign&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=200&access_token=${fbToken}`
     );
     const campData = await campRes.json();
     if (campData.error) throw new Error(campData.error.message);
@@ -68,7 +72,7 @@ module.exports = async function handler(req, res) {
     await supabaseUpsert('campaign_snapshots', campRows, 'date,platform,campaign_id');
 
     const adRes = await fetch(
-      `${FB_BASE}/${fbAccount}/insights?fields=${fields},ad_id,ad_name&date_preset=maximum&level=ad&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=500&access_token=${fbToken}`
+      `${FB_BASE}/${fbAccount}/insights?fields=${fields},ad_id,ad_name&time_range={"since":"${startDate}","until":"${endDate}"}&level=ad&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=200&access_token=${fbToken}`
     );
     const adData = await adRes.json();
     if (adData.error) throw new Error(adData.error.message);
@@ -95,18 +99,17 @@ module.exports = async function handler(req, res) {
 
   // ── TIKTOK ───────────────────────────────────────────────────────────────
   try {
-    const endDateObj   = new Date();
-    const startDateObj = new Date(Date.now() - days * 86400000);
     const allRows = [];
+    let chunkEnd = new Date();
+    const startDateObj = new Date(Date.now() - days * 86400000);
 
-    let chunkEnd = new Date(endDateObj);
     while (chunkEnd > startDateObj) {
       const chunkStart = new Date(chunkEnd);
       chunkStart.setDate(chunkStart.getDate() - 29);
       if (chunkStart < startDateObj) chunkStart.setTime(startDateObj.getTime());
 
-      const startDate = chunkStart.toISOString().slice(0, 10);
-      const endDate   = chunkEnd.toISOString().slice(0, 10);
+      const sd = chunkStart.toISOString().slice(0, 10);
+      const ed = chunkEnd.toISOString().slice(0, 10);
 
       const queryParams = [
         `advertiser_id=${ttAdvertiser}`,
@@ -114,8 +117,8 @@ module.exports = async function handler(req, res) {
         `data_level=AUCTION_CAMPAIGN`,
         `dimensions=${encodeURIComponent(JSON.stringify(['campaign_id', 'stat_time_day']))}`,
         `metrics=${encodeURIComponent(JSON.stringify(['campaign_name','spend','impressions','reach','clicks','ctr','cpc','cpm','frequency','real_time_result','real_time_cost_per_result']))}`,
-        `start_date=${startDate}`,
-        `end_date=${endDate}`,
+        `start_date=${sd}`,
+        `end_date=${ed}`,
         `page_size=1000`,
       ].join('&');
 
@@ -129,7 +132,7 @@ module.exports = async function handler(req, res) {
 
       const chunkRows = (insData.data?.list || [])
         .map(r => ({
-          date:          r.dimensions?.stat_time_day?.slice(0, 10) || endDate,
+          date:          r.dimensions?.stat_time_day?.slice(0, 10) || ed,
           platform:      'tiktok',
           campaign_id:   String(r.dimensions?.campaign_id || ''),
           campaign_name: r.metrics?.campaign_name || '',
@@ -158,5 +161,5 @@ module.exports = async function handler(req, res) {
     results.tiktok = { error: e.message };
   }
 
-  return res.status(200).json({ ok: true, days, results });
+  return res.status(200).json({ ok: true, days, start_date: startDate, end_date: endDate, results });
 };
