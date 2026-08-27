@@ -379,8 +379,8 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
       <div class="cb-label">${futureLabels[i]}</div>
       <div class="cb-val">${m.cac ? sek(m.cac) : '—'}</div>
       <div class="cb-sub">
-        ${m.existing.toFixed(1)} bef. leads + ${m.new_leads.toFixed(1)} nya leads
-        = ${m.total.toFixed(1)} kunder
+        ${(m.existing||0).toFixed(1)} bef. leads + ${(m.new_leads||0).toFixed(1)} nya leads
+        = ${(m.total||0).toFixed(1)} kunder
       </div>
     </div>
   `).join('');
