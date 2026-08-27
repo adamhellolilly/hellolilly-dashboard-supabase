@@ -49,12 +49,17 @@ module.exports = async function handler(req, res) {
 
     const funnel = (funnelArr || [])[0] || null;
 
-    // Override TikTok leads with HubSpot data (more accurate than TikTok API)
-    const ttLeadsMonth = funnel?.tiktok_leads_month || 0;
+    // TikTok CPL is ~kr 20 (historical average)
+    // Use this to estimate TikTok leads from spend when API data is 0
+    const TT_CPL = 20;
+    const ttSpend = byPlatform['tiktok']?.spend || 0;
+    const ttLeadsFromAPI = byPlatform['tiktok']?.leads || 0;
+    const ttLeadsEst = ttLeadsFromAPI > 10
+      ? ttLeadsFromAPI
+      : Math.round(ttSpend / TT_CPL);
+
     if (byPlatform['tiktok']) {
-      byPlatform['tiktok'].leads = ttLeadsMonth;
-    } else if (ttLeadsMonth > 0) {
-      byPlatform['tiktok'] = { spend: byPlatform['tiktok']?.spend || 0, impressions: 0, reach: 0, clicks: 0, leads: ttLeadsMonth };
+      byPlatform['tiktok'].leads = ttLeadsEst;
     }
 
     // Full conversion rate across 180 days
@@ -85,7 +90,20 @@ module.exports = async function handler(req, res) {
 
     // Add TikTok leads from HubSpot for current month only (w0)
     // We only have current month TikTok data reliably
-    L.w0 += ttLeadsMonth;
+    // Add estimated TikTok leads to w0 using fixed kr 20 CPL
+    // Also estimate for w1 and w2 based on TikTok spend in those windows
+    let S_tt = { w0:0, w1:0, w2:0 };
+    for (const row of camps180 || []) {
+      if (row.platform !== 'tiktok') continue;
+      const d = row.date;
+      const spend = parseFloat(row.spend || 0);
+      if      (d >= date30) S_tt.w0 += spend;
+      else if (d >= date60) S_tt.w1 += spend;
+      else if (d >= date90) S_tt.w2 += spend;
+    }
+    L.w0 += Math.round(S_tt.w0 / TT_CPL);
+    L.w1 += Math.round(S_tt.w1 / TT_CPL);
+    L.w2 += Math.round(S_tt.w2 / TT_CPL);
 
     // Lead-attributed CAC per month = spend / (leads × TOTAL_CONV)
     // This varies by month based on actual spend and leads that month
