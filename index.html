@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HelloLilly — ROM Dashboard</title>
+<script>
+// Simple password protection
+const PASSWORD = 'hellolilly2026';
+const stored = sessionStorage.getItem('hl_auth');
+if (stored !== PASSWORD) {
+  const input = prompt('Ange lösenord:');
+  if (input !== PASSWORD) {
+    document.write('<h2 style="font-family:sans-serif;text-align:center;margin-top:20vh">Fel lösenord.</h2>');
+    throw new Error('Unauthorized');
+  }
+  sessionStorage.setItem('hl_auth', PASSWORD);
+}
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
@@ -103,6 +116,20 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
 .pi-v.pink{color:var(--pink);}
 .pi-s{font-size:11px;color:rgba(252,250,247,.45);margin-top:3px;}
 .proj-note{margin-top:18px;padding-top:14px;border-top:1px solid rgba(252,250,247,.1);font-size:12px;color:rgba(252,250,247,.45);line-height:1.6;}
+.proj-accuracy{background:var(--w2);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
+.proj-accuracy table{width:100%;border-collapse:collapse;}
+.proj-accuracy thead th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink60);padding:12px 16px;text-align:left;border-bottom:2px solid var(--ink10);background:var(--w2);}
+.proj-accuracy thead th:not(:first-child){text-align:right;}
+.proj-accuracy tbody tr{border-bottom:1px solid var(--ink06);transition:background .1s;}
+.proj-accuracy tbody tr:hover{background:var(--beige);}
+.proj-accuracy tbody td{padding:14px 16px;font-size:13px;}
+.proj-accuracy tbody td:not(:first-child){text-align:right;}
+.proj-month{font-weight:700;}
+.acc-good{color:var(--good);font-weight:700;}
+.acc-warn{color:var(--warn);font-weight:700;}
+.acc-bad{color:var(--bad);font-weight:700;}
+.acc-pending{color:var(--ink40);font-style:italic;}
+.proj-note-row td{font-size:11px;color:var(--ink60);padding:8px 16px;border-bottom:1px solid var(--ink06);background:var(--ink06);}
 .ads-wrap{background:var(--w2);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
 .ads-bar{padding:14px 18px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--ink10);flex-wrap:wrap;}
 .ads-search{background:var(--beige);border:1px solid var(--ink10);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--ink);outline:none;width:200px;}
@@ -176,6 +203,11 @@ body{font-family:var(--f);background:var(--beige);color:var(--ink);font-size:14p
   <div class="funnel-wrap" id="funnel"></div>
   <div class="sec">Projicerad CAC</div>
   <div class="proj" id="proj"></div>
+  <div class="sec">Projektionsnoggrannhet</div>
+  <div class="proj-accuracy" id="proj-accuracy">
+    <div style="color:var(--ink60);font-style:italic;font-size:13px;">Laddar projektionsdata…</div>
+  </div>
+
   <div class="sec">Annonsanalys</div>
   <div class="ads-wrap">
     <div class="ads-bar">
@@ -328,6 +360,85 @@ function buildCacChart(funnel, platforms, totalSpend, totalLeads, projection) {
 
 }
 
+async function loadProjections() {
+  try {
+    const r = await fetch('/api/projections');
+    if (!r.ok) return;
+    const rows = await r.json();
+    renderProjections(Array.isArray(rows) ? rows : []);
+  } catch(e) {
+    document.getElementById('proj-accuracy').innerHTML =
+      '<div style="padding:16px;color:var(--ink60);font-size:13px">Ingen projektionsdata ännu — synka för att börja spåra.</div>';
+  }
+}
+
+function renderProjections(rows) {
+  const el = document.getElementById('proj-accuracy');
+  if (!rows || !rows.length) {
+    el.innerHTML = '<div style="padding:16px;color:var(--ink60);font-size:13px">Ingen projektionsdata ännu — kör sync varje månad för att spåra projektionsnoggrannhet.</div>';
+    return;
+  }
+
+  const monthNames = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const fmtMonth = d => { const dt = new Date(d); return monthNames[dt.getMonth()] + ' ' + dt.getFullYear(); };
+
+  const html = `
+    <table>
+      <thead><tr>
+        <th>Månad</th>
+        <th>Leads</th>
+        <th>Spend</th>
+        <th>Projicerad CAC</th>
+        <th>Faktiska kunder</th>
+        <th>Faktisk CAC</th>
+        <th>Noggrannhet</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(row => {
+          const projCAC = parseFloat(row.projected_cac) || null;
+          const actCAC  = parseFloat(row.actual_cac) || null;
+          const actCust = parseInt(row.actual_customers) || 0;
+
+          // Accuracy: how close is actual to projected?
+          let accStr = '<span class="acc-pending">Väntar (180d)</span>';
+          let accClass = '';
+          if (actCAC && projCAC) {
+            const diff = Math.abs(actCAC - projCAC) / projCAC * 100;
+            if (diff <= 15) { accStr = `${diff.toFixed(0)}% avvikelse`; accClass = 'acc-good'; }
+            else if (diff <= 30) { accStr = `${diff.toFixed(0)}% avvikelse`; accClass = 'acc-warn'; }
+            else { accStr = `${diff.toFixed(0)}% avvikelse`; accClass = 'acc-bad'; }
+          }
+
+          // Status
+          const monthDate = new Date(row.month);
+          const monthsAgo = Math.floor((Date.now() - monthDate) / (30 * 86400000));
+          let status = '';
+          if (monthsAgo < 1) status = '🔵 Pågående';
+          else if (monthsAgo < 6) status = `⏳ ${monthsAgo}mån sedan (${6-monthsAgo}mån kvar)`;
+          else status = actCAC ? '✅ Klar' : '⚠️ Klar men saknar data';
+
+          return `<tr>
+            <td class="proj-month">${fmtMonth(row.month)}</td>
+            <td>${parseInt(row.leads||0).toLocaleString('sv-SE')}</td>
+            <td>${sek(parseFloat(row.spend||0))}</td>
+            <td>${projCAC ? sek(projCAC) : '—'}</td>
+            <td>${actCust > 0 ? actCust : '<span class="acc-pending">—</span>'}</td>
+            <td>${actCAC ? sek(actCAC) : '<span class="acc-pending">—</span>'}</td>
+            <td class="${accClass}">${accStr}</td>
+            <td>${status}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <div style="padding:10px 16px;font-size:11px;color:var(--ink60);border-top:1px solid var(--ink10)">
+      Projektionsnoggrannhet mäts när 180 dagar har passerat — tid för konverteringsfönstret att stängas.
+      Faktisk CAC uppdateras vid varje daglig HubSpot-sync.
+    </div>`;
+
+  el.innerHTML = html;
+}
+
 async function loadData() {
   const dot=document.getElementById('sdot'),stxt=document.getElementById('stxt');
   dot.className='sdot loading'; stxt.textContent='Hämtar data…';
@@ -340,6 +451,7 @@ async function loadData() {
     document.getElementById('upd').textContent='Synkad: '+new Date(DATA.synced_at).toLocaleString('sv-SE');
     document.getElementById('footer-ts').textContent='Facebook · TikTok · HubSpot · Supabase · '+new Date().toLocaleString('sv-SE');
     render();
+    loadProjections();
   } catch(e) { dot.className='sdot err'; stxt.textContent='Fel: '+e.message; }
 }
 
