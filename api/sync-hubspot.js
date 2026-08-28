@@ -30,7 +30,6 @@ module.exports = async function handler(req, res) {
     return d.total || 0;
   }
 
-  // Helper to count KollaROM or customers entered after a timestamp for a source
   function kollaFilter(sourceFilters, ts) {
     return [{ filters: [...sourceFilters, { operator: 'GTE', propertyName: 'hs_v2_date_entered_736277986', value: String(ts) }] }];
   }
@@ -38,48 +37,48 @@ module.exports = async function handler(req, res) {
     return [{ filters: [...sourceFilters, { operator: 'GTE', propertyName: 'hs_v2_date_entered_customer', value: String(ts) }] }];
   }
 
-  const fbNewFilter  = [{ operator: 'EQ', propertyName: 'hs_latest_source_data_2', value: 'huvudkampanjapi' }];
-  const fbOldFilter  = [{ operator: 'CONTAINS_TOKEN', propertyName: 'hs_analytics_first_url', value: '120232042406430116' }];
-  const ttFilter     = [{ operator: 'CONTAINS_TOKEN', propertyName: 'hs_analytics_first_url', value: 'Smartcampaign_ROM' }];
+  const fbNewFilter = [{ operator: 'EQ', propertyName: 'hs_latest_source_data_2', value: 'huvudkampanjapi' }];
+  const fbOldFilter = [{ operator: 'CONTAINS_TOKEN', propertyName: 'hs_analytics_first_url', value: '120232042406430116' }];
+  const ttFilter    = [{ operator: 'CONTAINS_TOKEN', propertyName: 'hs_analytics_first_url', value: 'Smartcampaign_ROM' }];
+
+  const supaHeaders = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates,return=minimal',
+  };
 
   try {
-    // All-time
-    const newKolla     = await count([{ filters: [...fbNewFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: '736277986' }] }]);
-    const newCust      = await count([{ filters: [...fbNewFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: 'customer' }] }]);
-    const oldKolla     = await count([{ filters: [...fbOldFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: '736277986' }] }]);
-    const oldCust      = await count([{ filters: [...fbOldFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: 'customer' }] }]);
-    const ttKolla      = await count([{ filters: [...ttFilter,    { operator: 'EQ', propertyName: 'lifecyclestage', value: '736277986' }] }]);
-    const ttCust       = await count([{ filters: [...ttFilter,    { operator: 'EQ', propertyName: 'lifecyclestage', value: 'customer' }] }]);
+    // All-time counts
+    const newKolla  = await count([{ filters: [...fbNewFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: '736277986' }] }]);
+    const newCust   = await count([{ filters: [...fbNewFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: 'customer' }] }]);
+    const oldKolla  = await count([{ filters: [...fbOldFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: '736277986' }] }]);
+    const oldCust   = await count([{ filters: [...fbOldFilter, { operator: 'EQ', propertyName: 'lifecyclestage', value: 'customer' }] }]);
+    const ttKolla   = await count([{ filters: [...ttFilter,    { operator: 'EQ', propertyName: 'lifecyclestage', value: '736277986' }] }]);
+    const ttCust    = await count([{ filters: [...ttFilter,    { operator: 'EQ', propertyName: 'lifecyclestage', value: 'customer' }] }]);
 
-    // 7 days
-    const k7  = await count(kollaFilter([...fbNewFilter, ...fbOldFilter.map ? fbOldFilter : [fbOldFilter[0]]], ts7d));
-    const c7  = await count(custFilter([...fbNewFilter],  ts7d));
+    // Period counts
+    const newKolla30 = await count(kollaFilter(fbNewFilter, ts30d));
+    const newCust30  = await count(custFilter(fbNewFilter,  ts30d));
+    const oldKolla30 = await count(kollaFilter(fbOldFilter, ts30d));
+    const oldCust30  = await count(custFilter(fbOldFilter,  ts30d));
+    const ttKolla30  = await count(kollaFilter(ttFilter,    ts30d));
+    const ttCust30   = await count(custFilter(ttFilter,     ts30d));
 
-    // 30 days
-    const newKolla30   = await count(kollaFilter(fbNewFilter, ts30d));
-    const newCust30    = await count(custFilter(fbNewFilter,  ts30d));
-    const oldKolla30   = await count(kollaFilter(fbOldFilter, ts30d));
-    const oldCust30    = await count(custFilter(fbOldFilter,  ts30d));
-    const ttKolla30    = await count(kollaFilter(ttFilter,    ts30d));
-    const ttCust30     = await count(custFilter(ttFilter,     ts30d));
+    const newKolla60 = await count(kollaFilter(fbNewFilter, ts60d));
+    const newCust60  = await count(custFilter(fbNewFilter,  ts60d));
+    const oldKolla60 = await count(kollaFilter(fbOldFilter, ts60d));
+    const oldCust60  = await count(custFilter(fbOldFilter,  ts60d));
+    const ttKolla60  = await count(kollaFilter(ttFilter,    ts60d));
+    const ttCust60   = await count(custFilter(ttFilter,     ts60d));
 
-    // 60 days
-    const newKolla60   = await count(kollaFilter(fbNewFilter, ts60d));
-    const newCust60    = await count(custFilter(fbNewFilter,  ts60d));
-    const oldKolla60   = await count(kollaFilter(fbOldFilter, ts60d));
-    const oldCust60    = await count(custFilter(fbOldFilter,  ts60d));
-    const ttKolla60    = await count(kollaFilter(ttFilter,    ts60d));
-    const ttCust60     = await count(custFilter(ttFilter,     ts60d));
+    const newKolla90 = await count(kollaFilter(fbNewFilter, ts90d));
+    const newCust90  = await count(custFilter(fbNewFilter,  ts90d));
+    const oldKolla90 = await count(kollaFilter(fbOldFilter, ts90d));
+    const oldCust90  = await count(custFilter(fbOldFilter,  ts90d));
+    const ttKolla90  = await count(kollaFilter(ttFilter,    ts90d));
+    const ttCust90   = await count(custFilter(ttFilter,     ts90d));
 
-    // 90 days
-    const newKolla90   = await count(kollaFilter(fbNewFilter, ts90d));
-    const newCust90    = await count(custFilter(fbNewFilter,  ts90d));
-    const oldKolla90   = await count(kollaFilter(fbOldFilter, ts90d));
-    const oldCust90    = await count(custFilter(fbOldFilter,  ts90d));
-    const ttKolla90    = await count(kollaFilter(ttFilter,    ts90d));
-    const ttCust90     = await count(custFilter(ttFilter,     ts90d));
-
-    // Superheta + TikTok leads this month
     const superheta    = await count([{ filters: [
       { operator: 'GTE', propertyName: 'recent_conversion_date', value: String(msTs) },
       { operator: 'EQ',  propertyName: 'ar_du_inskriven_pa_arbetsformedlingen_', value: 'Ja' },
@@ -98,12 +97,9 @@ module.exports = async function handler(req, res) {
       total_leads: 0,
       kollarom_total:    newKolla + oldKolla + ttKolla,
       customers_total:   newCust  + oldCust  + ttCust,
-      new_camp_kollarom: newKolla,
-      new_camp_customers: newCust,
-      old_camp_kollarom: oldKolla,
-      old_camp_customers: oldCust,
-      new_camp_leads: 0,
-      old_camp_leads: 0,
+      new_camp_kollarom: newKolla, new_camp_customers: newCust,
+      old_camp_kollarom: oldKolla, old_camp_customers: oldCust,
+      new_camp_leads: 0, old_camp_leads: 0,
       superheta_month:    superheta,
       tiktok_leads_month: ttLeadsMonth,
       tiktok_kollarom:    ttKolla,
@@ -117,18 +113,62 @@ module.exports = async function handler(req, res) {
     };
 
     const r = await fetch(`${SUPABASE_URL}/rest/v1/hubspot_funnel?on_conflict=date`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify(row),
+      method: 'POST', headers: supaHeaders, body: JSON.stringify(row),
     });
-    if (!r.ok) { const e = await r.text(); throw new Error('Supabase: ' + e); }
+    if (!r.ok) { const e = await r.text(); throw new Error('Supabase funnel: ' + e); }
 
-    return res.status(200).json({ ok: true, date: today, data: row });
+    // ── PROJECTION SNAPSHOT ──────────────────────────────────────────────
+    // Store this month's projection so we can verify accuracy later
+    // Pull current month's spend + leads from Supabase
+    const monthStart = today.slice(0, 8) + '01';
+    const campsRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/campaign_snapshots?date=gte.${monthStart}&select=leads,spend,platform`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const camps = await campsRes.json();
+
+    const TT_CPL = 20;
+    const TOTAL_CONV = 0.0118;
+
+    let monthLeads = 0, monthSpend = 0;
+    for (const c of camps || []) {
+      const leads = parseInt(c.leads || 0);
+      const spend = parseFloat(c.spend || 0);
+      monthSpend += spend;
+      if (c.platform === 'tiktok') {
+        // Estimate TikTok leads from spend if API returns 0
+        monthLeads += leads > 10 ? leads : Math.round(spend / TT_CPL);
+      } else {
+        monthLeads += leads;
+      }
+    }
+
+    const projectedCAC = monthLeads > 0
+      ? Math.round(monthSpend / (monthLeads * TOTAL_CONV))
+      : null;
+
+    // Get actual customers from this month's leads (those who've already converted)
+    // We use customers_30d as a proxy for "customers from this month's leads so far"
+    const actualCust = newCust30 + oldCust30 + ttCust30;
+    const actualCAC  = actualCust > 0 ? Math.round(monthSpend / actualCust) : null;
+
+    if (projectedCAC) {
+      const projRow = {
+        month:          monthStart,
+        leads:          monthLeads,
+        spend:          monthSpend,
+        projected_cac:  projectedCAC,
+        actual_customers: actualCust,
+        actual_cac:     actualCAC,
+      };
+
+      const pr = await fetch(`${SUPABASE_URL}/rest/v1/cac_projections?on_conflict=month`, {
+        method: 'POST', headers: supaHeaders, body: JSON.stringify(projRow),
+      });
+      if (!pr.ok) { const e = await pr.text(); console.error('Supabase projections:', e); }
+    }
+
+    return res.status(200).json({ ok: true, date: today, data: row, projection: { leads: monthLeads, spend: monthSpend, projected_cac: projectedCAC } });
 
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
