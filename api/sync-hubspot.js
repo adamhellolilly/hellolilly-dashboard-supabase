@@ -41,6 +41,31 @@ module.exports = async function handler(req, res) {
   const fbOldFilter = [{ operator: 'CONTAINS_TOKEN', propertyName: 'hs_analytics_first_url', value: '120232042406430116' }];
   const ttFilter    = [{ operator: 'CONTAINS_TOKEN', propertyName: 'hs_analytics_first_url', value: 'Smartcampaign_ROM' }];
 
+  // ── Clean single-method attribution (Facebook + TikTok combined) ─────────
+  // lastTouch:    counts a contact if their MOST RECENT session was FB or TikTok
+  // firstOrLast:  counts a contact if EITHER their first-ever OR most recent
+  //               session was FB or TikTok (broader net — a superset of lastTouch)
+  const lastTouchSource  = [{ operator: 'IN', propertyName: 'hs_latest_source_data_1',   values: ['Facebook', 'TikTok'] }];
+  const firstTouchSource = [{ operator: 'IN', propertyName: 'hs_analytics_source_data_1', values: ['Facebook', 'TikTok'] }];
+
+  function lastTouchCustFilter(ts) {
+    // ts === null means "all time" (use lifecyclestage instead of the date-entered field)
+    const dateOrStage = ts === null
+      ? { operator: 'EQ',  propertyName: 'lifecyclestage', value: 'customer' }
+      : { operator: 'GTE', propertyName: 'hs_v2_date_entered_customer', value: String(ts) };
+    return [{ filters: [...lastTouchSource, dateOrStage] }];
+  }
+  function firstOrLastCustFilter(ts) {
+    const dateOrStage = ts === null
+      ? { operator: 'EQ',  propertyName: 'lifecyclestage', value: 'customer' }
+      : { operator: 'GTE', propertyName: 'hs_v2_date_entered_customer', value: String(ts) };
+    // Two OR'd filterGroups = union of the two attribution methods, deduplicated by HubSpot
+    return [
+      { filters: [...lastTouchSource,  dateOrStage] },
+      { filters: [...firstTouchSource, dateOrStage] },
+    ];
+  }
+
   const supaHeaders = {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,
@@ -79,6 +104,16 @@ module.exports = async function handler(req, res) {
     const ttKolla90  = await count(kollaFilter(ttFilter,    ts90d));
     const ttCust90   = await count(custFilter(ttFilter,     ts90d));
 
+    // ── Clean single-method customer counts (last-touch / first-or-last) ───
+    const custLastTouchTotal   = await count(lastTouchCustFilter(null));
+    const custLastTouch30      = await count(lastTouchCustFilter(ts30d));
+    const custLastTouch60      = await count(lastTouchCustFilter(ts60d));
+    const custLastTouch90      = await count(lastTouchCustFilter(ts90d));
+    const custFirstOrLastTotal = await count(firstOrLastCustFilter(null));
+    const custFirstOrLast30    = await count(firstOrLastCustFilter(ts30d));
+    const custFirstOrLast60    = await count(firstOrLastCustFilter(ts60d));
+    const custFirstOrLast90    = await count(firstOrLastCustFilter(ts90d));
+
     const superheta    = await count([{ filters: [
       { operator: 'GTE', propertyName: 'recent_conversion_date', value: String(msTs) },
       { operator: 'EQ',  propertyName: 'ar_du_inskriven_pa_arbetsformedlingen_', value: 'Ja' },
@@ -110,6 +145,14 @@ module.exports = async function handler(req, res) {
       customers_60d: newCust60  + oldCust60  + ttCust60,
       kollarom_90d:  newKolla90 + oldKolla90 + ttKolla90,
       customers_90d: newCust90  + oldCust90  + ttCust90,
+      customers_last_touch_total:    custLastTouchTotal,
+      customers_last_touch_30d:      custLastTouch30,
+      customers_last_touch_60d:      custLastTouch60,
+      customers_last_touch_90d:      custLastTouch90,
+      customers_first_or_last_total: custFirstOrLastTotal,
+      customers_first_or_last_30d:   custFirstOrLast30,
+      customers_first_or_last_60d:   custFirstOrLast60,
+      customers_first_or_last_90d:   custFirstOrLast90,
     };
 
     const r = await fetch(`${SUPABASE_URL}/rest/v1/hubspot_funnel?on_conflict=date`, {
