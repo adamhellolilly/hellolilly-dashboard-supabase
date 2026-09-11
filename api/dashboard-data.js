@@ -160,6 +160,23 @@ module.exports = async function handler(req, res) {
     else if (days <= 60) { kollarom = funnel?.kollarom_60d||0;  customers = funnel?.customers_60d||0; }
     else                 { kollarom = funnel?.kollarom_90d||0;  customers = funnel?.customers_90d||0; }
 
+    // Same period selection for the two clean single-method attribution counts
+    let customersLastTouch, customersFirstOrLast;
+    if (days <= 30) {
+      customersLastTouch   = funnel?.customers_last_touch_30d||0;
+      customersFirstOrLast = funnel?.customers_first_or_last_30d||0;
+    } else if (days <= 60) {
+      customersLastTouch   = funnel?.customers_last_touch_60d||0;
+      customersFirstOrLast = funnel?.customers_first_or_last_60d||0;
+    } else {
+      customersLastTouch   = funnel?.customers_last_touch_90d||0;
+      customersFirstOrLast = funnel?.customers_first_or_last_90d||0;
+    }
+
+    const totalSpendForCAC = (byPlatform['facebook']?.spend||0) + (byPlatform['tiktok']?.spend||0);
+    const cacLastTouch   = customersLastTouch   > 0 ? Math.round(totalSpendForCAC / customersLastTouch)   : null;
+    const cacFirstOrLast = customersFirstOrLast > 0 ? Math.round(totalSpendForCAC / customersFirstOrLast) : null;
+
     const adMap = {};
     for (const row of ads || []) {
       if (!adMap[row.ad_id]) {
@@ -191,6 +208,10 @@ module.exports = async function handler(req, res) {
       funnel,
       kollarom,
       customers,
+      attribution: {
+        last_touch:    { customers: customersLastTouch,   cac: cacLastTouch },
+        first_or_last: { customers: customersFirstOrLast, cac: cacFirstOrLast },
+      },
       projection,
       synced_at: new Date().toISOString(),
     });
