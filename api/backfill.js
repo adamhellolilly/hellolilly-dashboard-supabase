@@ -51,13 +51,24 @@ module.exports = async function handler(req, res) {
     const fields = 'campaign_id,campaign_name,spend,impressions,reach,frequency,cpm,clicks,ctr,cpc,actions,date_start';
     const filter = JSON.stringify(ROM_CAMPS);
 
-    const campRes = await fetch(
-      `${FB_BASE}/${fbAccount}/insights?fields=${fields}&time_range={"since":"${startDate}","until":"${endDate}"}&level=campaign&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=200&access_token=${fbToken}`
-    );
-    const campData = await campRes.json();
-    if (campData.error) throw new Error(campData.error.message);
+    // Fetch all pages of campaign data
+    async function fetchAllPages(url) {
+      const allData = [];
+      let nextUrl = url;
+      while (nextUrl) {
+        const r = await fetch(nextUrl);
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        allData.push(...(d.data || []));
+        nextUrl = d.paging?.next || null;
+      }
+      return allData;
+    }
 
-    const campRows = (campData.data || []).map(d => ({
+    const campUrl = `${FB_BASE}/${fbAccount}/insights?fields=${fields}&time_range={"since":"${startDate}","until":"${endDate}"}&level=campaign&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=500&access_token=${fbToken}`;
+    const campRows_raw = await fetchAllPages(campUrl);
+
+    const campRows = campRows_raw.map(d => ({
       date: d.date_start, platform: 'facebook',
       campaign_id: d.campaign_id, campaign_name: d.campaign_name,
       spend: parseFloat(d.spend || 0), impressions: parseInt(d.impressions || 0),
@@ -71,13 +82,10 @@ module.exports = async function handler(req, res) {
 
     await supabaseUpsert('campaign_snapshots', campRows, 'date,platform,campaign_id');
 
-    const adRes = await fetch(
-      `${FB_BASE}/${fbAccount}/insights?fields=${fields},ad_id,ad_name&time_range={"since":"${startDate}","until":"${endDate}"}&level=ad&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=200&access_token=${fbToken}`
-    );
-    const adData = await adRes.json();
-    if (adData.error) throw new Error(adData.error.message);
+    const adUrl = `${FB_BASE}/${fbAccount}/insights?fields=${fields},ad_id,ad_name&time_range={"since":"${startDate}","until":"${endDate}"}&level=ad&time_increment=1&filtering=[{"field":"campaign.id","operator":"IN","value":${filter}}]&limit=500&access_token=${fbToken}`;
+    const adRows_raw = await fetchAllPages(adUrl);
 
-    const adRows = (adData.data || []).map(d => ({
+    const adRows = adRows_raw.map(d => ({
       date: d.date_start, platform: 'facebook',
       campaign_id: d.campaign_id, campaign_name: d.campaign_name,
       ad_id: d.ad_id, ad_name: d.ad_name,
