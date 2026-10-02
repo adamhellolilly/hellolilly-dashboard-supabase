@@ -1,10 +1,10 @@
-name: Sync Dashboard Data
+name: Daily Dashboard Sync
 
 on:
   schedule:
-    # Facebook + TikTok: every hour
-    - cron: '0 * * * *'
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+    # Run every day at 07:00 UTC (09:00 Swedish time)
+    - cron: '0 7 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
   sync:
@@ -13,12 +13,26 @@ jobs:
       - name: Sync Facebook
         run: |
           curl -s "${{ secrets.VERCEL_URL }}/api/sync-facebook" || true
+          echo "Facebook sync done"
+
+      - name: Wait
+        run: sleep 5
 
       - name: Sync TikTok
         run: |
           curl -s "${{ secrets.VERCEL_URL }}/api/sync-tiktok" || true
+          echo "TikTok sync done"
 
-      - name: Sync HubSpot (daily at 6am UTC)
-        if: ${{ github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch' }}
+      - name: Wait
+        run: sleep 5
+
+      - name: Sync HubSpot
         run: |
           curl -s "${{ secrets.VERCEL_URL }}/api/sync-hubspot" || true
+          echo "HubSpot sync done"
+
+      - name: Weekly backfill (Mondays only)
+        if: ${{ github.event.schedule == '0 7 * * 1' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          curl -s "${{ secrets.VERCEL_URL }}/api/backfill?days=14" || true
+          echo "Backfill done"
